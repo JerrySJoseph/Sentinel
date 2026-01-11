@@ -126,6 +126,9 @@ importers:
 
   apps/cli:
     dependencies:
+      '@sentinel/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       commander:
         specifier: ^11.1.0
         version: 11.1.0

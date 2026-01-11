@@ -12,6 +12,7 @@ describe('Health Command', () => {
   beforeEach(() => {
     mockHttpClient = {
       get: jest.fn(),
+      post: jest.fn(),
     } as unknown as jest.Mocked<HttpClient>;
 
     command = createHealthCommand(mockHttpClient);

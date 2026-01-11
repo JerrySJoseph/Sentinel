@@ -2,6 +2,7 @@
 
 import { Command } from 'commander';
 import { createHealthCommand } from './commands/health';
+import { createAskCommand } from './commands/ask';
 import { UndiciHttpClient } from './http-client';
 
 const program = new Command();
@@ -13,5 +14,6 @@ program
 
 const httpClient = new UndiciHttpClient();
 program.addCommand(createHealthCommand(httpClient));
+program.addCommand(createAskCommand(httpClient));
 
 program.parse();
