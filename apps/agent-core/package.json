@@ -5,7 +5,7 @@
   "description": "NestJS API service for the agent system",
   "main": "dist/main.js",
   "scripts": {
-    "prebuild": "pnpm --filter @sentinel/contracts build",
+    "prebuild": "pnpm --filter @sentinel/agent build",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -13,12 +13,12 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "pretest": "pnpm --filter @sentinel/contracts build",
+    "pretest": "pnpm --filter @sentinel/agent build",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "pretest:e2e": "pnpm --filter @sentinel/contracts build",
+    "pretest:e2e": "pnpm --filter @sentinel/agent build",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
@@ -27,7 +27,9 @@
     "@nestjs/common": "^10.3.0",
     "@nestjs/core": "^10.3.0",
     "@nestjs/platform-express": "^10.3.0",
+    "@sentinel/agent": "workspace:*",
     "@sentinel/contracts": "workspace:*",
+    "@sentinel/providers": "workspace:*",
     "reflect-metadata": "^0.1.14",
     "rxjs": "^7.8.1"
   },

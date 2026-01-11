@@ -1,48 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { randomUUID } from 'crypto';
-import { ChatRequest, ChatResponse, chatResponseSchema } from '@sentinel/contracts';
+import { Agent, InMemoryMemoryPort } from '@sentinel/agent';
+import { ProviderRegistry, MockProvider } from '@sentinel/providers';
+import { ChatResponse } from '@sentinel/contracts';
 
 @Injectable()
 export class ChatService {
-  handleChat(request: ChatRequest): ChatResponse {
-    const startTimeMs = Date.now();
-    const startedAt = new Date().toISOString();
+  private readonly agent: Agent;
 
-    const requestId = randomUUID();
-    const sessionId = request.sessionId ?? randomUUID();
+  constructor() {
+    const providers = new ProviderRegistry();
+    providers.register(new MockProvider());
 
-    const finalResponse = `Stubbed response: ${request.message}`;
+    // NOTE: In-memory stub only. Replace with Postgres-backed memory port later.
+    const memory = new InMemoryMemoryPort();
 
-    const endedAt = new Date().toISOString();
-    const latencyMs = Date.now() - startTimeMs;
+    this.agent = new Agent({ providers, memory });
+  }
 
-    const response: ChatResponse = {
-      requestId,
-      sessionId,
-      latencyMs,
-      finalResponse,
-      toolCalls: [],
-      toolResults: [],
-      trace: {
-        requestId,
-        sessionId,
-        steps: [
-          {
-            id: randomUUID(),
-            kind: 'final',
-            name: 'stub-response',
-            startedAt,
-            endedAt,
-            durationMs: latencyMs,
-            input: { message: request.message },
-            output: { finalResponse },
-          },
-        ],
-      },
-    };
-
-    // Ensure our stub stays contract-correct as schemas evolve.
-    return chatResponseSchema.parse(response);
+  async runTurn(input: { sessionId?: string; message: string }): Promise<ChatResponse> {
+    return await this.agent.runTurn({
+      sessionId: input.sessionId,
+      message: input.message,
+      provider: 'mock',
+      toolPolicy: { mode: 'safe' },
+    });
   }
 }
 

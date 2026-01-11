@@ -33,8 +33,8 @@ describe('ChatController (e2e)', () => {
         requestId: expect.any(String),
         sessionId: expect.any(String),
         latencyMs: expect.any(Number),
-        finalResponse: expect.any(String),
-        toolCalls: [],
+        finalResponse: 'MockProvider: hello',
+        toolCalls: expect.any(Array),
         toolResults: [],
         trace: expect.any(Object),
       })
@@ -53,6 +53,20 @@ describe('ChatController (e2e)', () => {
     );
 
     expect(res.body.trace.steps.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.trace.steps[0]).toEqual(
+      expect.objectContaining({
+        kind: 'provider',
+        name: 'mock.plan',
+      })
+    );
+
+    expect(res.body.toolCalls.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.toolCalls[0]).toEqual(
+      expect.objectContaining({
+        name: 'noop',
+        args: {},
+      })
+    );
   });
 
   it('/v1/chat (POST) invalid request should return 400 with structured error', async () => {

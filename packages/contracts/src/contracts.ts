@@ -130,6 +130,15 @@ export const chatResponseSchema = z
   .strict();
 export type ChatResponse = z.infer<typeof chatResponseSchema>;
 
+export const planOutputSchema = z
+  .object({
+    toolCalls: z.array(toolCallSchema),
+    finalResponse: z.string(),
+    trace: agentTraceSchema,
+  })
+  .strict();
+export type PlanOutput = z.infer<typeof planOutputSchema>;
+
 // PascalCase aliases for ergonomic imports
 export const ToolCallSchema = toolCallSchema;
 export const ToolResultSchema = toolResultSchema;
@@ -138,4 +147,5 @@ export const AgentTraceStepSchema = agentTraceStepSchema;
 export const ChatMessageSchema = chatMessageSchema;
 export const ChatRequestSchema = chatRequestSchema;
 export const ChatResponseSchema = chatResponseSchema;
+export const PlanOutputSchema = planOutputSchema;
 

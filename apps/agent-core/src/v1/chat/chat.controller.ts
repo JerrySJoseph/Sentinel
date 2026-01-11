@@ -14,7 +14,7 @@ export class ChatController {
 
   @Post()
   @HttpCode(200)
-  chat(@Body() body: unknown) {
+  async chat(@Body() body: unknown) {
     const parsed = chatRequestSchema.safeParse(body);
     if (!parsed.success) {
       const issues: ValidationIssue[] = parsed.error.issues.map((issue) => ({
@@ -32,7 +32,10 @@ export class ChatController {
       });
     }
 
-    return this.chatService.handleChat(parsed.data);
+    return await this.chatService.runTurn({
+      sessionId: parsed.data.sessionId,
+      message: parsed.data.message,
+    });
   }
 }
 
