@@ -1,0 +1,19 @@
+{
+    "name": "@sentinel/agent",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Agent orchestration: planner, executor, and state management",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "lint": "eslint \"{src,test}/**/*.ts\"",
+        "lint:fix": "eslint \"{src,test}/**/*.ts\" --fix",
+        "typecheck": "tsc --noEmit",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {},
+    "devDependencies": {}
+}
