@@ -296,6 +296,17 @@ export DATABASE_URL="postgresql://sentinel:sentinel@localhost:5432/sentinel?sche
 pnpm --filter agent-core start:dev
 ```
 
+### Run UI (Next.js)
+
+The UI talks to `agent-core` via `NEXT_PUBLIC_AGENT_CORE_URL` (defaults to `http://localhost:3000`).
+
+```bash
+export NEXT_PUBLIC_AGENT_CORE_URL="http://localhost:3000"
+pnpm --filter ui dev
+```
+
+Then open `http://localhost:3000` (Next dev default) in your browser.
+
 ## 13. Docker & Compose
 
 The project ships with:
@@ -309,6 +320,19 @@ Compose file:
 - `infra/compose.yml`
   - `postgres` (dev)
   - `postgres_test` (profile `test`)
+  - `agent-core` (API on `http://localhost:3000`)
+  - `ui` (web on `http://localhost:3001`)
+
+### Run with Docker Compose
+
+```bash
+docker compose -f infra/compose.yml up -d --build postgres agent-core ui
+```
+
+Open:
+
+- UI: `http://localhost:3001`
+- API health: `http://localhost:3000/health`
 
 ## 14. CLI Usage
 

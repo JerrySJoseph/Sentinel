@@ -48,6 +48,8 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+      # UI runs on http://localhost:3001 in compose by default.
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3001}
       - DATABASE_URL=postgresql://${POSTGRES_USER:-sentinel}:${POSTGRES_PASSWORD:-sentinel}@postgres:5432/${POSTGRES_DB:-sentinel}?schema=public
     depends_on:
       postgres:
@@ -60,6 +62,26 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  ui:
+    build:
+      context: ..
+      dockerfile: apps/ui/Dockerfile
+      args:
+        NEXT_PUBLIC_AGENT_CORE_URL: http://localhost:3000
+    container_name: sentinel-ui
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Browser-side calls should hit agent-core on the host-mapped port 3000.
+      - NEXT_PUBLIC_AGENT_CORE_URL=http://localhost:3000
+    depends_on:
+      agent-core:
+        condition: service_healthy
+    networks:
+      - sentinel-network
 
 volumes:
   postgres_data:
