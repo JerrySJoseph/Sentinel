@@ -7,6 +7,10 @@ describe('HealthController (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
+    process.env.DATABASE_URL =
+      process.env.DATABASE_URL ??
+      'postgresql://sentinel:sentinel@localhost:5433/sentinel_test?schema=public';
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -23,6 +27,9 @@ describe('HealthController (e2e)', () => {
     return request(app.getHttpServer())
       .get('/health')
       .expect(200)
-      .expect({ status: 'ok' });
+      .expect((res) => {
+        expect(res.headers['x-request-id']).toEqual(expect.any(String));
+        expect(res.body).toEqual({ status: 'ok' });
+      });
   });
 });

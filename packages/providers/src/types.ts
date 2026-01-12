@@ -17,3 +17,7 @@ export interface LLMProvider {
   plan(input: PlanInput): Promise<PlanOutput>;
 }
 
+export interface ToggleableProvider extends LLMProvider {
+  isEnabled(): boolean;
+}
+

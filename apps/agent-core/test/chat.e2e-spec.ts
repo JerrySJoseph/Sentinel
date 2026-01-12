@@ -10,6 +10,10 @@ describe('ChatController (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
+    process.env.DATABASE_URL =
+      process.env.DATABASE_URL ??
+      'postgresql://sentinel:sentinel@localhost:5433/sentinel_test?schema=public';
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -28,6 +32,7 @@ describe('ChatController (e2e)', () => {
       .send({ message: 'hello' })
       .expect(200);
 
+    expect(res.headers['x-request-id']).toEqual(expect.any(String));
     expect(res.body).toEqual(
       expect.objectContaining({
         requestId: expect.any(String),
@@ -35,7 +40,7 @@ describe('ChatController (e2e)', () => {
         latencyMs: expect.any(Number),
         finalResponse: 'MockProvider: hello',
         toolCalls: expect.any(Array),
-        toolResults: [],
+        toolResults: expect.any(Array),
         trace: expect.any(Object),
       })
     );
@@ -43,6 +48,7 @@ describe('ChatController (e2e)', () => {
     expect(res.body.requestId).toMatch(UUID_V4_REGEX);
     expect(res.body.sessionId).toMatch(UUID_V4_REGEX);
     expect(res.body.latencyMs).toBeGreaterThanOrEqual(0);
+    expect(res.body.requestId).toBe(res.headers['x-request-id']);
 
     expect(res.body.trace).toEqual(
       expect.objectContaining({
@@ -63,8 +69,17 @@ describe('ChatController (e2e)', () => {
     expect(res.body.toolCalls.length).toBeGreaterThanOrEqual(1);
     expect(res.body.toolCalls[0]).toEqual(
       expect.objectContaining({
-        name: 'noop',
-        args: {},
+        name: 'calculator',
+        args: expect.objectContaining({ expression: expect.any(String) }),
+      })
+    );
+
+    expect(res.body.toolResults.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.toolResults[0]).toEqual(
+      expect.objectContaining({
+        ok: true,
+        name: 'calculator',
+        result: 7,
       })
     );
   });
@@ -75,6 +90,7 @@ describe('ChatController (e2e)', () => {
       .send({ message: '' })
       .expect(400);
 
+    expect(res.headers['x-request-id']).toEqual(expect.any(String));
     expect(res.body).toEqual(
       expect.objectContaining({
         statusCode: 400,

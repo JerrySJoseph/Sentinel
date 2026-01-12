@@ -19,6 +19,17 @@ describe('ProviderRegistry', () => {
     expect(() => registry.register(provider)).toThrow(ProviderRegistryError);
   });
 
+  it('rejects disabled providers at registration time', () => {
+    const registry = new ProviderRegistry();
+    const disabled = {
+      name: 'disabled',
+      isEnabled: () => false,
+      plan: jest.fn(),
+    };
+
+    expect(() => registry.register(disabled)).toThrow(ProviderRegistryError);
+  });
+
   it('throws ProviderNotFoundError when missing', () => {
     const registry = new ProviderRegistry();
     expect(() => registry.get('missing')).toThrow(ProviderNotFoundError);

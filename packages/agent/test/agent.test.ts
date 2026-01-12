@@ -4,6 +4,7 @@ import {
   type LLMProvider,
   type PlanInput,
 } from '@sentinel/providers';
+import { ToolRegistry } from '@sentinel/tools';
 import { Agent, InMemoryMemoryPort } from '../src';
 
 const UUID_V4_REGEX =
@@ -37,6 +38,8 @@ describe('Agent', () => {
     const agent = new Agent({
       providers,
       memory: new InMemoryMemoryPort(),
+      tools: new ToolRegistry(),
+      toolExecution: { timeoutMs: 50, outputLimitBytes: 10_000 },
     });
 
     const res = await agent.runTurn({
@@ -58,6 +61,8 @@ describe('Agent', () => {
     const agent = new Agent({
       providers: new ProviderRegistry(),
       memory: new InMemoryMemoryPort(),
+      tools: new ToolRegistry(),
+      toolExecution: { timeoutMs: 50, outputLimitBytes: 10_000 },
     });
 
     await expect(
@@ -87,6 +92,8 @@ describe('Agent', () => {
     const agent = new Agent({
       providers,
       memory: new InMemoryMemoryPort(),
+      tools: new ToolRegistry(),
+      toolExecution: { timeoutMs: 50, outputLimitBytes: 10_000 },
     });
 
     await expect(

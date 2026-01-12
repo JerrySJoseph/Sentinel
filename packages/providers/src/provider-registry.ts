@@ -1,10 +1,13 @@
 import { ProviderNotFoundError, ProviderRegistryError } from './errors';
-import { LLMProvider, ProviderName } from './types';
+import { LLMProvider, ProviderName, ToggleableProvider } from './types';
 
 export class ProviderRegistry {
   private readonly providers = new Map<ProviderName, LLMProvider>();
 
   register(provider: LLMProvider): void {
+    if (isToggleableProvider(provider) && !provider.isEnabled()) {
+      throw new ProviderRegistryError(`Provider is disabled: ${provider.name}`);
+    }
     if (this.providers.has(provider.name)) {
       throw new ProviderRegistryError(`Provider already registered: ${provider.name}`);
     }
@@ -43,5 +46,9 @@ export class ProviderRegistry {
     }
     return this.get(names[0]);
   }
+}
+
+function isToggleableProvider(provider: LLMProvider): provider is ToggleableProvider {
+  return typeof (provider as ToggleableProvider).isEnabled === 'function';
 }
 
