@@ -36,6 +36,7 @@ describe('RateLimitGuard', () => {
       databaseUrl: 'postgresql://x',
       redis: { enabled: false },
       rateLimit: { enabled: true, perIp: { limit: 1, windowMs: 60_000 }, store: 'memory' },
+      concurrency: { providerMax: 1, toolMax: 1, store: 'memory', leaseTtlMs: 10_000 },
     };
 
     // Construct guard without Nest DI for unit test.
