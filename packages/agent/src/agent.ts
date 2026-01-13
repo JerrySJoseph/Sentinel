@@ -11,6 +11,8 @@ import {
 import { ProviderRegistry } from '@sentinel/providers';
 import { executeToolCall, ToolRegistry } from '@sentinel/tools';
 import { MemoryPort } from './memory';
+import type { ConcurrencyLimiter } from '@sentinel/observability';
+import { AgentBusyError } from './errors';
 
 export type ToolPolicy = {
   mode: 'safe' | 'developer';
@@ -37,6 +39,10 @@ export class Agent {
       memory: MemoryPort;
       tools: ToolRegistry;
       toolExecution: ToolExecutionConfig;
+      concurrency?: {
+        provider?: ConcurrencyLimiter;
+        tool?: ConcurrencyLimiter;
+      };
     }
   ) { }
 
@@ -55,10 +61,39 @@ export class Agent {
 
     const provider = this.deps.providers.resolve(input.provider);
 
-    const planUnknown = await provider.plan({
-      request: { sessionId, message: input.message, history },
-      options: { requestId, sessionId },
-    });
+    let providerLease:
+      | { leaseId: string; expiresAtMs: number; release: () => Promise<void> }
+      | undefined;
+
+    if (this.deps.concurrency?.provider) {
+      const decision = await this.deps.concurrency.provider.tryAcquire();
+      if (!decision.acquired) {
+        throw new AgentBusyError({
+          code: 'PROVIDER_BUSY',
+          message: 'Provider is at concurrency capacity',
+          retryAfterMs: decision.retryAfterMs,
+        });
+      }
+      providerLease = {
+        leaseId: decision.leaseId,
+        expiresAtMs: decision.expiresAtMs!,
+        release: async () =>
+          await this.deps.concurrency!.provider!.release({
+            leaseId: decision.leaseId,
+            expiresAtMs: decision.expiresAtMs!,
+          }),
+      };
+    }
+
+    let planUnknown: unknown;
+    try {
+      planUnknown = await provider.plan({
+        request: { sessionId, message: input.message, history },
+        options: { requestId, sessionId },
+      });
+    } finally {
+      if (providerLease) await providerLease.release();
+    }
 
     // Validate provider output is shape-correct (defense-in-depth).
     const plan = PlanOutputSchema.parse(planUnknown);
@@ -76,17 +111,48 @@ export class Agent {
         idempotencyKey,
       });
 
-      const toolResult =
-        existing ??
-        (await executeToolCall({
-          registry: this.deps.tools,
-          toolCall,
-          policy: input.toolPolicy,
-          requestId,
-          sessionId,
-          timeoutMs: this.deps.toolExecution.timeoutMs,
-          outputLimitBytes: this.deps.toolExecution.outputLimitBytes,
-        }));
+      let toolResult: ToolResult;
+      if (existing) {
+        toolResult = existing;
+      } else {
+        let toolLease:
+          | { leaseId: string; expiresAtMs: number; release: () => Promise<void> }
+          | undefined;
+
+        if (this.deps.concurrency?.tool) {
+          const decision = await this.deps.concurrency.tool.tryAcquire();
+          if (!decision.acquired) {
+            throw new AgentBusyError({
+              code: 'TOOL_BUSY',
+              message: 'Tool executor is at concurrency capacity',
+              retryAfterMs: decision.retryAfterMs,
+            });
+          }
+          toolLease = {
+            leaseId: decision.leaseId,
+            expiresAtMs: decision.expiresAtMs!,
+            release: async () =>
+              await this.deps.concurrency!.tool!.release({
+                leaseId: decision.leaseId,
+                expiresAtMs: decision.expiresAtMs!,
+              }),
+          };
+        }
+
+        try {
+          toolResult = await executeToolCall({
+            registry: this.deps.tools,
+            toolCall,
+            policy: input.toolPolicy,
+            requestId,
+            sessionId,
+            timeoutMs: this.deps.toolExecution.timeoutMs,
+            outputLimitBytes: this.deps.toolExecution.outputLimitBytes,
+          });
+        } finally {
+          if (toolLease) await toolLease.release();
+        }
+      }
 
       toolResults.push(toolResult);
 

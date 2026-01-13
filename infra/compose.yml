@@ -18,6 +18,20 @@ services:
     networks:
       - sentinel-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: sentinel-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sentinel-network
+
   postgres_test:
     image: postgres:16-alpine
     container_name: sentinel-postgres-test
@@ -51,6 +65,7 @@ services:
       # UI runs on http://localhost:3001 in compose by default.
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3001}
       - DATABASE_URL=postgresql://${POSTGRES_USER:-sentinel}:${POSTGRES_PASSWORD:-sentinel}@postgres:5432/${POSTGRES_DB:-sentinel}?schema=public
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
     depends_on:
       postgres:
         condition: service_healthy

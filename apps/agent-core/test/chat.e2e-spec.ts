@@ -94,9 +94,9 @@ describe('ChatController (e2e)', () => {
     expect(res.body).toEqual(
       expect.objectContaining({
         statusCode: 400,
-        error: 'Bad Request',
-        code: 'VALIDATION_ERROR',
+        code: 'INVALID_INPUT',
         message: 'Invalid request body',
+        requestId: res.headers['x-request-id'],
         issues: expect.any(Array),
       })
     );

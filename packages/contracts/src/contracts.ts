@@ -139,6 +139,50 @@ export const planOutputSchema = z
   .strict();
 export type PlanOutput = z.infer<typeof planOutputSchema>;
 
+// -----------------------------
+// Error model (API error envelope)
+// -----------------------------
+
+export const sentinelErrorCodeSchema = z.union([
+  z.enum([
+    'INVALID_INPUT',
+    'INVALID_PLAN',
+    'PROVIDER_ERROR',
+    'RATE_LIMITED',
+    'INTERNAL_ERROR',
+    'PROVIDER_BUSY',
+    'TOOL_BUSY',
+    // Common tool-level codes that can surface as API errors (misconfiguration, policy, etc.)
+    'POLICY_DENIED',
+    'TIMEOUT',
+  ]),
+  // Allow future tool codes without changing the envelope schema.
+  z.string().regex(/^TOOL_[A-Z0-9_]+$/),
+]);
+export type SentinelErrorCode = z.infer<typeof sentinelErrorCodeSchema>;
+
+export const errorIssueSchema = z
+  .object({
+    path: z.string().min(1),
+    message: z.string().min(1),
+    code: z.string().min(1).optional(),
+  })
+  .strict();
+export type ErrorIssue = z.infer<typeof errorIssueSchema>;
+
+export const errorResponseSchema = z
+  .object({
+    statusCode: z.number().int(),
+    code: sentinelErrorCodeSchema,
+    message: z.string().min(1),
+    requestId: uuidSchema,
+    retryAfterMs: z.number().int().nonnegative().optional(),
+    issues: z.array(errorIssueSchema).optional(),
+    details: jsonValueSchema.optional(),
+  })
+  .strict();
+export type ErrorResponse = z.infer<typeof errorResponseSchema>;
+
 // PascalCase aliases for ergonomic imports
 export const ToolCallSchema = toolCallSchema;
 export const ToolResultSchema = toolResultSchema;
@@ -148,4 +192,5 @@ export const ChatMessageSchema = chatMessageSchema;
 export const ChatRequestSchema = chatRequestSchema;
 export const ChatResponseSchema = chatResponseSchema;
 export const PlanOutputSchema = planOutputSchema;
+export const ErrorResponseSchema = errorResponseSchema;
 
