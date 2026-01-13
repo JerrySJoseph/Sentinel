@@ -1,5 +1,5 @@
 import { ProviderRegistry } from '@sentinel/providers';
-import { CalculatorTool, ToolRegistry, type Tool } from '@sentinel/tools';
+import { CalculatorTool, EchoTool, ToolRegistry, type Tool } from '@sentinel/tools';
 import { Agent, InMemoryMemoryPort } from '../src';
 import { z } from 'zod';
 
@@ -56,6 +56,63 @@ describe('Agent tool execution', () => {
     const toolSteps = res.trace.steps.filter((s) => s.kind === 'tool');
     expect(toolSteps).toHaveLength(1);
     expect(toolSteps[0].name).toBe('calculator');
+  });
+
+  it('executes echo tool call and includes it in trace/toolResults', async () => {
+    const providers = new ProviderRegistry();
+    providers.register({
+      name: 'planner',
+      plan: async (input) => ({
+        toolCalls: [
+          {
+            id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            name: 'echo',
+            args: { text: 'hi' },
+          },
+        ],
+        finalResponse: 'echoed',
+        trace: {
+          requestId: input.options.requestId,
+          sessionId: input.options.sessionId,
+          steps: [
+            {
+              id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
+              kind: 'plan',
+              name: 'planner.plan',
+              startedAt: '2026-01-11T00:00:00.000Z',
+            },
+          ],
+        },
+      }),
+    });
+
+    const tools = new ToolRegistry();
+    tools.register(new EchoTool());
+
+    const agent = new Agent({
+      providers,
+      memory: new InMemoryMemoryPort(),
+      tools,
+      toolExecution: { timeoutMs: 50, outputLimitBytes: 10_000 },
+    });
+
+    const res = await agent.runTurn({
+      message: 'echo hi',
+      provider: 'planner',
+      toolPolicy: { mode: 'safe' },
+    });
+
+    expect(res.toolCalls).toHaveLength(1);
+    expect(res.toolCalls[0].name).toBe('echo');
+
+    expect(res.toolResults).toHaveLength(1);
+    expect(res.toolResults[0].ok).toBe(true);
+    expect(res.toolResults[0].name).toBe('echo');
+    expect(res.toolResults[0].result).toEqual({ echoed: 'hi', length: 2 });
+
+    const toolSteps = res.trace.steps.filter((s) => s.kind === 'tool');
+    expect(toolSteps).toHaveLength(1);
+    expect(toolSteps[0].name).toBe('echo');
   });
 
   it('rejects unknown tool but continues and returns toolResults', async () => {

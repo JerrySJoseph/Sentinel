@@ -2,7 +2,7 @@ import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Agent, PrismaMemoryPort } from '@sentinel/agent';
 import { createPrismaClient, MemoryRepository } from '@sentinel/memory';
 import { ProviderRegistry, MockProvider } from '@sentinel/providers';
-import { CalculatorTool, ToolRegistry } from '@sentinel/tools';
+import { CalculatorTool, EchoTool, ToolRegistry } from '@sentinel/tools';
 import { ChatResponse } from '@sentinel/contracts';
 
 @Injectable()
@@ -23,6 +23,7 @@ export class ChatService implements OnModuleDestroy {
 
     const tools = new ToolRegistry();
     tools.register(new CalculatorTool());
+    tools.register(new EchoTool());
 
     this.agent = new Agent({
       providers,
