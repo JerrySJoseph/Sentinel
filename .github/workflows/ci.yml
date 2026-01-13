@@ -89,6 +89,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Wait for Postgres (5433)
+        run: node -e "const net=require('net');const host='127.0.0.1';const port=5433;const start=Date.now();(function ping(){const s=net.createConnection({host,port});s.on('connect',()=>{console.log('Postgres is reachable');s.end();});s.on('error',()=>{if(Date.now()-start>60_000){console.error('Timed out waiting for Postgres');process.exit(1);}setTimeout(ping,1000);});})();"
+
       - name: Build shared packages (required by agent-core tests)
         run: pnpm --filter @sentinel/agent build
 
