@@ -19,15 +19,18 @@ export class MockProvider implements LLMProvider {
     // - "echo <text>" -> echo tool
     // - otherwise -> calculator tool
     const echoMatch = msg.match(/^echo\s+([\s\S]+)$/i);
+    // IMPORTANT: toolCall.id must be stable across retries when the same idempotency-key is used.
+    // If we tie it to requestId, idempotency cannot work (requestId changes per request).
+    const stableToolCallId = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
     const toolCall =
       echoMatch
         ? {
-            id: input.options.requestId,
+            id: stableToolCallId,
             name: 'echo',
             args: { text: echoMatch[1] },
           }
         : {
-            id: input.options.requestId,
+            id: stableToolCallId,
             name: 'calculator',
             args: { expression: '1 + 2 * 3' },
           };
