@@ -2,8 +2,12 @@
 
 A modular, distributed-ready agent framework built with TypeScript + NestJS, designed for tool-using AI systems that are safe, extensible, and production-ready.
 
+- **Quickstart**: see [`Quickstart.md`](Quickstart.md)
+- **Architecture overview**: see [`docs/architecture.md`](docs/architecture.md)
+
 ## Table of Contents
 
+- [Quickstart](Quickstart.md)
 - [Overview](#1-overview)
 - [What This Project Is (and Is Not)](#2-what-this-project-is-and-is-not)
 - [Core Concepts](#3-core-concepts)
