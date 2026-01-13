@@ -2,8 +2,12 @@
 
 A modular, distributed-ready agent framework built with TypeScript + NestJS, designed for tool-using AI systems that are safe, extensible, and production-ready.
 
+- **Quickstart**: see [`Quickstart.md`](Quickstart.md)
+- **Architecture overview**: see [`docs/architecture.md`](docs/architecture.md)
+
 ## Table of Contents
 
+- [Quickstart](Quickstart.md)
 - [Overview](#1-overview)
 - [What This Project Is (and Is Not)](#2-what-this-project-is-and-is-not)
 - [Core Concepts](#3-core-concepts)
@@ -281,27 +285,10 @@ No code changes required to scale.
 pnpm install
 ```
 
-### One-command dev (recommended)
-
-This starts local infrastructure (Postgres), applies Prisma migrations, then runs:
-
-- `agent-core`: `http://localhost:3000`
-- `ui`: `http://localhost:3001`
-
-```bash
-pnpm dev
-```
-
-Stop everything with `Ctrl+C`. Infrastructure containers are left running; stop them with:
-
-```bash
-pnpm down
-```
-
 ### Start Postgres (dev)
 
 ```bash
-pnpm run compose:up -d postgres
+docker compose -f infra/compose.yml up -d postgres
 ```
 
 ### Run API (agent-core)
@@ -319,10 +306,10 @@ The UI talks to `agent-core` via `NEXT_PUBLIC_AGENT_CORE_URL` (defaults to `http
 
 ```bash
 export NEXT_PUBLIC_AGENT_CORE_URL="http://localhost:3000"
-PORT=3001 pnpm --filter ui dev
+pnpm --filter ui dev
 ```
 
-Then open `http://localhost:3001` in your browser.
+Then open `http://localhost:3000` (Next dev default) in your browser.
 
 ## 13. Docker & Compose
 
@@ -343,7 +330,7 @@ Compose file:
 ### Run with Docker Compose
 
 ```bash
-pnpm run compose:up -d --build postgres agent-core ui
+docker compose -f infra/compose.yml up -d --build postgres agent-core ui
 ```
 
 Open:
@@ -391,16 +378,6 @@ No external API calls in tests.
 ```bash
 pnpm test
 ```
-
-## Quick commands (workspace root)
-
-- **`pnpm dev`**: start Postgres, run migrations, start `agent-core` + `ui` locally
-- **`pnpm down`**: stop Docker Compose containers (`infra/compose.yml`)
-- **`pnpm run compose:up`**: run Docker Compose up (supports extra args)
-- **`pnpm run compose:down`**: run Docker Compose down
-- **`pnpm test`**: run all workspace tests (`apps/*` and `packages/*`)
-
-Note: `pnpm up` is a built-in pnpm command (dependency update). To run Compose-up via pnpm, use **`pnpm run up`** or **`pnpm run compose:up`**.
 
 ### Memory integration tests (requires Docker)
 
