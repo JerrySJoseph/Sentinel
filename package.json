@@ -4,6 +4,11 @@
   "private": true,
   "description": "Agent-like AI system as a distributed-ready modular monolith",
   "scripts": {
+    "compose:up": "node ./scripts/compose-up.mjs",
+    "compose:down": "node ./scripts/compose-down.mjs",
+    "up": "pnpm run compose:up",
+    "down": "pnpm run compose:down",
+    "dev": "node ./scripts/dev.mjs",
     "build": "pnpm -r --filter './apps/*' --filter './packages/*' build",
     "build:core": "pnpm --filter agent-core build",
     "build:cli": "pnpm --filter cli build",
@@ -19,11 +24,11 @@
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.1.3",
-    "prettier": "^3.2.5",
-    "typescript": "^5.3.3"
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-prettier": "^5.5.4",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=18.0.0",
