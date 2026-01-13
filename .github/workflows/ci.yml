@@ -10,8 +10,39 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  unit_and_build:
-    name: Unit tests + build
+  build_check:
+    name: Build check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      CI: "true"
+      NODE_ENV: production
+      NEXT_PUBLIC_AGENT_CORE_URL: http://localhost:3000
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (apps + packages)
+        run: pnpm build
+
+  unit_tests:
+    name: Unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -41,8 +72,6 @@ jobs:
       - name: Unit tests (workspace)
         run: pnpm test
 
-      - name: Build (apps + packages)
-        run: pnpm build
 
   e2e:
     name: E2E tests (Postgres)
@@ -93,7 +122,7 @@ jobs:
         run: node -e "const net=require('net');const host='127.0.0.1';const port=5433;const start=Date.now();(function ping(){const s=net.createConnection({host,port});s.on('connect',()=>{console.log('Postgres is reachable');s.end();});s.on('error',()=>{if(Date.now()-start>60_000){console.error('Timed out waiting for Postgres');process.exit(1);}setTimeout(ping,1000);});})();"
 
       - name: Build shared packages (required by agent-core tests)
-        run: pnpm --filter @sentinel/agent build
+        run: pnpm --filter @sentinel/config build && pnpm --filter @sentinel/kv build && pnpm --filter @sentinel/observability build && pnpm --filter @sentinel/agent build
 
       - name: Prisma generate (memory)
         run: pnpm -C packages/memory prisma:generate
