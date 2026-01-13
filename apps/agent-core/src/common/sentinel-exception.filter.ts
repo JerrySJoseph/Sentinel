@@ -1,4 +1,4 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
 import {
@@ -12,6 +12,7 @@ import {
 import { ProviderConfigError, ProviderNotFoundError, ProviderRegistryError } from '@sentinel/providers';
 import { ToolNotFoundError, ToolPolicyError, ToolUserError } from '@sentinel/tools';
 import { AgentBusyError } from '@sentinel/agent';
+import { MetricsService } from '../metrics/metrics.service';
 
 function asRequestId(req: Request): string {
   const rid = (req as Request & { requestId?: string }).requestId;
@@ -55,7 +56,10 @@ function isZodErrorLike(err: unknown): err is { issues: unknown[] } {
 }
 
 @Catch()
+@Injectable()
 export class SentinelExceptionFilter implements ExceptionFilter {
+  constructor(private readonly metrics: MetricsService) {}
+
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const req = ctx.getRequest<Request>();
@@ -170,6 +174,9 @@ export class SentinelExceptionFilter implements ExceptionFilter {
           message: 'Internal error',
           requestId,
         } satisfies ErrorResponse);
+
+    // Metrics: record the normalized error code (bounded label set).
+    this.metrics.incError({ code: out.code, statusCode: out.statusCode });
 
     res.status(out.statusCode).json(out);
   }

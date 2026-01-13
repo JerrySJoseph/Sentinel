@@ -12,9 +12,11 @@ import { RequestIdMiddleware } from './common/request-id.middleware';
 import { RequestLoggerMiddleware } from './common/request-logger.middleware';
 import { SentinelExceptionFilter } from './common/sentinel-exception.filter';
 import { TestSupportModule } from './test-support/test-support.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { MetricsMiddleware } from './metrics/metrics.middleware';
 
 @Module({
-  imports: [ChatModule, KvModule, RateLimitModule, TestSupportModule.forRoot()],
+  imports: [MetricsModule, ChatModule, KvModule, RateLimitModule, TestSupportModule.forRoot()],
   controllers: [AppController, HealthController],
   providers: [
     AppService,
@@ -31,6 +33,6 @@ import { TestSupportModule } from './test-support/test-support.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(RequestIdMiddleware, RequestLoggerMiddleware).forRoutes('*');
+    consumer.apply(RequestIdMiddleware, MetricsMiddleware, RequestLoggerMiddleware).forRoutes('*');
   }
 }

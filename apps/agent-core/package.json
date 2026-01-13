@@ -35,6 +35,7 @@
     "@sentinel/observability": "workspace:*",
     "@sentinel/providers": "workspace:*",
     "@sentinel/tools": "workspace:*",
+    "prom-client": "^15.1.3",
     "reflect-metadata": "^0.1.14",
     "rxjs": "^7.8.1"
   },
