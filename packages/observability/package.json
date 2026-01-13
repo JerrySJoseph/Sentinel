@@ -14,7 +14,9 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "dependencies": {},
+  "dependencies": {
+    "redis": "^5.10.0"
+  },
   "devDependencies": {
     "@types/jest": "^29.5.11",
     "@types/node": "^20.11.5",

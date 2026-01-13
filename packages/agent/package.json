@@ -6,9 +6,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "prebuild": "pnpm --filter @sentinel/contracts build && pnpm --filter @sentinel/providers build && pnpm --filter @sentinel/tools build && pnpm --filter @sentinel/memory build",
+    "prebuild": "pnpm --filter @sentinel/contracts build && pnpm --filter @sentinel/providers build && pnpm --filter @sentinel/tools build && pnpm --filter @sentinel/memory build && pnpm --filter @sentinel/observability build",
     "build": "tsc",
-    "pretest": "pnpm --filter @sentinel/contracts build && pnpm --filter @sentinel/providers build && pnpm --filter @sentinel/tools build && pnpm --filter @sentinel/memory build",
+    "pretest": "pnpm --filter @sentinel/contracts build && pnpm --filter @sentinel/providers build && pnpm --filter @sentinel/tools build && pnpm --filter @sentinel/memory build && pnpm --filter @sentinel/observability build",
     "test": "jest",
     "test:watch": "jest --watch",
     "lint": "eslint \"{src,test}/**/*.ts\"",
@@ -21,7 +21,8 @@
     "@sentinel/contracts": "workspace:*",
     "@sentinel/providers": "workspace:*",
     "@sentinel/tools": "workspace:*",
-    "@sentinel/memory": "workspace:*"
+    "@sentinel/memory": "workspace:*",
+    "@sentinel/observability": "workspace:*"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",

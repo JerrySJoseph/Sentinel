@@ -1,19 +1,28 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Agent, PrismaMemoryPort } from '@sentinel/agent';
 import { createPrismaClient, MemoryRepository } from '@sentinel/memory';
 import { ProviderRegistry, MockProvider } from '@sentinel/providers';
 import { CalculatorTool, EchoTool, ToolRegistry } from '@sentinel/tools';
 import { ChatResponse } from '@sentinel/contracts';
+import type { AgentCoreConfig } from '@sentinel/config';
+import type { ConcurrencyLimiter } from '@sentinel/observability';
+import { AGENT_CORE_CONFIG } from '../../config/config.module';
+import {
+  PROVIDER_CONCURRENCY_LIMITER,
+  TOOL_CONCURRENCY_LIMITER,
+} from '../../concurrency/concurrency.constants';
 
 @Injectable()
 export class ChatService implements OnModuleDestroy {
   private readonly agent: Agent;
-  private readonly prisma = createPrismaClient({ databaseUrl: process.env.DATABASE_URL });
+  private readonly prisma: ReturnType<typeof createPrismaClient>;
 
-  constructor() {
-    if (!process.env.DATABASE_URL) {
-      throw new Error('DATABASE_URL is required (Postgres) for agent-core to be stateless');
-    }
+  constructor(
+    @Inject(AGENT_CORE_CONFIG) cfg: AgentCoreConfig,
+    @Inject(PROVIDER_CONCURRENCY_LIMITER) providerLimiter: ConcurrencyLimiter,
+    @Inject(TOOL_CONCURRENCY_LIMITER) toolLimiter: ConcurrencyLimiter
+  ) {
+    this.prisma = createPrismaClient({ databaseUrl: cfg.databaseUrl });
 
     const providers = new ProviderRegistry();
     providers.register(new MockProvider());
@@ -30,6 +39,7 @@ export class ChatService implements OnModuleDestroy {
       memory,
       tools,
       toolExecution: { timeoutMs: 2000, outputLimitBytes: 50_000 },
+      concurrency: { provider: providerLimiter, tool: toolLimiter },
     });
   }
 
