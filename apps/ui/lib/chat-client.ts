@@ -1,10 +1,26 @@
 import {
     ChatRequestSchema,
     ChatResponseSchema,
+    ErrorResponseSchema,
     type ChatRequest,
     type ChatResponse,
+    type ErrorResponse,
 } from '@sentinel/contracts';
 import { buildAgentCoreUrl } from './api';
+
+export type ResponseMeta = {
+    requestId?: string;
+    traceId?: string;
+    spanId?: string;
+};
+
+export type ChatClientError = {
+    kind: 'network' | 'http' | 'validation';
+    message: string;
+    code?: string;
+    requestId?: string;
+    retryAfterMs?: number;
+};
 
 export type FetchLike = (
     input: string,
@@ -17,13 +33,14 @@ export type FetchLike = (
 ) => Promise<{
     ok: boolean;
     status: number;
+    headers?: { get(name: string): string | null };
     text(): Promise<string>;
 }>;
 
 export type ChatClient = {
     sendMessage(input: { sessionId?: string; message: string }): Promise<
-        | { ok: true; data: ChatResponse }
-        | { ok: false; error: { message: string; kind: 'network' | 'http' | 'validation' } }
+        | { ok: true; data: ChatResponse; meta?: ResponseMeta }
+        | { ok: false; error: ChatClientError; meta?: ResponseMeta }
     >;
 };
 
@@ -40,8 +57,8 @@ export function createChatClient(opts?: { fetchFn?: FetchLike; timeoutMs?: numbe
 
     return {
         async sendMessage(input): Promise<
-            | { ok: true; data: ChatResponse }
-            | { ok: false; error: { message: string; kind: 'network' | 'http' | 'validation' } }
+            | { ok: true; data: ChatResponse; meta?: ResponseMeta }
+            | { ok: false; error: ChatClientError; meta?: ResponseMeta }
         > {
             let reqBody: ChatRequest;
             try {
@@ -70,6 +87,14 @@ export function createChatClient(opts?: { fetchFn?: FetchLike; timeoutMs?: numbe
                     signal: controller.signal,
                 });
 
+                const meta: ResponseMeta | undefined = res.headers
+                    ? {
+                          requestId: res.headers.get('x-request-id') ?? undefined,
+                          traceId: res.headers.get('x-trace-id') ?? undefined,
+                          spanId: res.headers.get('x-span-id') ?? undefined,
+                      }
+                    : undefined;
+
                 const rawText = await res.text().catch(() => '');
                 const data: unknown = (() => {
                     if (!rawText) return undefined;
@@ -81,19 +106,36 @@ export function createChatClient(opts?: { fetchFn?: FetchLike; timeoutMs?: numbe
                 })();
 
                 if (!res.ok) {
+                    const parsedErr = ErrorResponseSchema.safeParse(data);
+                    if (parsedErr.success) {
+                        const e: ErrorResponse = parsedErr.data;
+                        return {
+                            ok: false,
+                            meta,
+                            error: {
+                                kind: 'http',
+                                message: e.message,
+                                code: e.code,
+                                requestId: e.requestId,
+                                retryAfterMs: e.retryAfterMs,
+                            },
+                        };
+                    }
+
                     const message =
                         typeof data === 'object' && data !== null && 'message' in data
                             ? String((data as { message?: unknown }).message)
                             : typeof data === 'string' && data.trim().length > 0
-                                ? data.trim()
-                                : `HTTP ${res.status}`;
-                    return { ok: false, error: { kind: 'http', message } };
+                              ? data.trim()
+                              : `HTTP ${res.status}`;
+                    return { ok: false, meta, error: { kind: 'http', message } };
                 }
 
                 const parsed = ChatResponseSchema.safeParse(data);
                 if (!parsed.success) {
                     return {
                         ok: false,
+                        meta,
                         error: {
                             kind: 'validation',
                             message: `Invalid response from agent-core (${formatZodIssues(
@@ -103,7 +145,7 @@ export function createChatClient(opts?: { fetchFn?: FetchLike; timeoutMs?: numbe
                     };
                 }
 
-                return { ok: true, data: parsed.data };
+                return { ok: true, data: parsed.data, meta };
             } catch (e) {
                 const message =
                     e instanceof DOMException && e.name === 'AbortError'

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildAgentCoreUrl } from '@/lib/api';
 import { type ChatResponse } from '@sentinel/contracts';
-import { createChatClient } from '@/lib/chat-client';
+import { createChatClient, type ChatClientError, type ResponseMeta } from '@/lib/chat-client';
 import { clearSessionId, loadSessionId, saveSessionId } from '@/lib/session';
 
 type ChatUiMessage = {
@@ -11,6 +11,8 @@ type ChatUiMessage = {
   role: 'user' | 'assistant';
   content: string;
   response?: ChatResponse;
+  error?: ChatClientError;
+  meta?: ResponseMeta;
   pending?: boolean;
 };
 
@@ -22,6 +24,38 @@ function newId(): string {
 
 function prettyJson(value: unknown): string {
   return JSON.stringify(value ?? null, null, 2);
+}
+
+function sum(nums: number[]): number {
+  return nums.reduce((a, b) => a + b, 0);
+}
+
+function formatMs(ms: number | undefined): string {
+  return typeof ms === 'number' && Number.isFinite(ms) ? `${ms}` : '—';
+}
+
+function deriveTraceSummary(response: ChatResponse): {
+  providerDurationMs?: number;
+  toolDurationMs?: number;
+  toolDurations?: Array<{ name: string; durationMs: number }>;
+} {
+  const providerMs = sum(
+    response.trace.steps
+      .filter((s) => s.kind === 'provider' && typeof s.durationMs === 'number')
+      .map((s) => s.durationMs as number),
+  );
+
+  const toolDurations = response.toolResults
+    .filter((tr) => typeof tr.durationMs === 'number')
+    .map((tr) => ({ name: tr.name, durationMs: tr.durationMs as number }));
+
+  const toolMs = sum(toolDurations.map((t) => t.durationMs));
+
+  return {
+    providerDurationMs: providerMs || undefined,
+    toolDurationMs: toolMs || undefined,
+    toolDurations: toolDurations.length ? toolDurations : undefined,
+  };
 }
 
 function updateMessageById(
@@ -82,7 +116,18 @@ export default function Home() {
       });
 
       if (!result.ok) {
-        throw new Error(result.error.message);
+        setError(result.error.message);
+        setMessages((prev) =>
+          updateMessageById(prev, thinkingId, (m) => ({
+            ...m,
+            pending: false,
+            response: undefined,
+            meta: result.meta,
+            error: result.error,
+            content: `Error: ${result.error.message}`,
+          })),
+        );
+        return;
       }
 
       setSessionId(result.data.sessionId);
@@ -94,6 +139,8 @@ export default function Home() {
           pending: false,
           content: result.data.finalResponse,
           response: result.data,
+          meta: result.meta,
+          error: undefined,
         })),
       );
     } catch (e) {
@@ -109,6 +156,8 @@ export default function Home() {
           ...m,
           pending: false,
           response: undefined,
+          meta: undefined,
+          error: { kind: 'network', message: msg },
           content: `Error: ${msg}`,
         })),
       );
@@ -180,14 +229,52 @@ export default function Home() {
                     <div className="grid grid-cols-1 gap-1">
                       <div>
                         <span className="font-medium">requestId:</span>{' '}
-                        <span className="font-mono">{m.response.requestId ?? '—'}</span>
+                        <span className="font-mono">
+                          {m.meta?.requestId ?? m.response.requestId ?? '—'}
+                        </span>
                       </div>
+                      {m.meta?.traceId ? (
+                        <div>
+                          <span className="font-medium">traceId:</span>{' '}
+                          <span className="font-mono">{m.meta.traceId}</span>
+                        </div>
+                      ) : null}
                       <div>
                         <span className="font-medium">latencyMs:</span>{' '}
                         <span className="font-mono">
                           {typeof m.response.latencyMs === 'number' ? m.response.latencyMs : '—'}
                         </span>
                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-1">
+                      <div className="font-medium text-black/70">Trace summary</div>
+                      {(() => {
+                        const s = deriveTraceSummary(m.response);
+                        return (
+                          <>
+                            <div>
+                              <span className="font-medium">providerDurationMs:</span>{' '}
+                              <span className="font-mono">{formatMs(s.providerDurationMs)}</span>
+                            </div>
+                            <div>
+                              <span className="font-medium">toolDurationMs:</span>{' '}
+                              <span className="font-mono">{formatMs(s.toolDurationMs)}</span>
+                            </div>
+                            {s.toolDurations ? (
+                              <div>
+                                <span className="font-medium">tools:</span>{' '}
+                                <span className="font-mono">
+                                  {s.toolDurations
+                                    .slice(0, 10)
+                                    .map((t) => `${t.name}:${t.durationMs}ms`)
+                                    .join(', ') || '—'}
+                                </span>
+                              </div>
+                            ) : null}
+                          </>
+                        );
+                      })()}
                     </div>
 
                     <div>
@@ -209,6 +296,41 @@ export default function Home() {
                       <pre className="max-h-64 overflow-auto rounded bg-black/5 p-2 font-mono">
                         {prettyJson(m.response.trace)}
                       </pre>
+                    </div>
+                  </div>
+                </details>
+              ) : m.role === 'assistant' && m.error ? (
+                <details className="mt-2 max-w-[90%] rounded-md border bg-white px-3 py-2 text-xs">
+                  <summary className="cursor-pointer select-none font-medium text-black/70">
+                    Inspect
+                  </summary>
+                  <div className="mt-2 space-y-3">
+                    <div className="grid grid-cols-1 gap-1">
+                      <div>
+                        <span className="font-medium">requestId:</span>{' '}
+                        <span className="font-mono">
+                          {m.error.requestId ?? m.meta?.requestId ?? '—'}
+                        </span>
+                      </div>
+                      {m.meta?.traceId ? (
+                        <div>
+                          <span className="font-medium">traceId:</span>{' '}
+                          <span className="font-mono">{m.meta.traceId}</span>
+                        </div>
+                      ) : null}
+                      <div>
+                        <span className="font-medium">code:</span>{' '}
+                        <span className="font-mono">{m.error.code ?? '—'}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">message:</span> {m.error.message}
+                      </div>
+                      {typeof m.error.retryAfterMs === 'number' ? (
+                        <div>
+                          <span className="font-medium">retryAfterMs:</span>{' '}
+                          <span className="font-mono">{m.error.retryAfterMs}</span>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </details>

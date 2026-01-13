@@ -5,6 +5,11 @@ function okResponse(obj: unknown) {
   return {
     ok: true,
     status: 200,
+    headers: {
+      get() {
+        return null;
+      },
+    },
     async text() {
       return JSON.stringify(obj);
     },
@@ -15,6 +20,12 @@ function badResponse(status: number, body: unknown) {
   return {
     ok: false,
     status,
+    headers: {
+      get(name: string) {
+        if (name.toLowerCase() === 'x-request-id') return 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+        return null;
+      },
+    },
     async text() {
       return typeof body === 'string' ? body : JSON.stringify(body);
     },
@@ -33,7 +44,8 @@ describe('chat client', () => {
       expect(body.message).toBe('hello');
       expect(body.sessionId).toBe(sessionId);
 
-      return okResponse({
+      return {
+        ...okResponse({
         requestId,
         sessionId,
         latencyMs: 5,
@@ -45,7 +57,15 @@ describe('chat client', () => {
           sessionId,
           steps: [],
         },
-      });
+        }),
+        headers: {
+          get(name: string) {
+            if (name.toLowerCase() === 'x-trace-id') return 'trace-abc';
+            if (name.toLowerCase() === 'x-span-id') return 'span-xyz';
+            return null;
+          },
+        },
+      };
     });
 
     const client = createChatClient({ fetchFn, timeoutMs: 50 });
@@ -58,6 +78,8 @@ describe('chat client', () => {
     if (result.ok) {
       expect(result.data.finalResponse).toBe('hi!');
       expect(result.data.sessionId).toBe(sessionId);
+      expect(result.meta?.traceId).toBe('trace-abc');
+      expect(result.meta?.spanId).toBe('span-xyz');
     }
   });
 
@@ -75,7 +97,12 @@ describe('chat client', () => {
 
   it('returns a readable error on non-2xx http responses', async () => {
     const fetchFn = vi.fn(async () =>
-      badResponse(400, { message: 'Invalid request body', code: 'VALIDATION_ERROR' }),
+      badResponse(400, {
+        statusCode: 400,
+        code: 'INVALID_INPUT',
+        message: 'Invalid request body',
+        requestId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+      }),
     );
     const client = createChatClient({ fetchFn, timeoutMs: 50 });
 
@@ -84,6 +111,8 @@ describe('chat client', () => {
     if (!result.ok) {
       expect(result.error.kind).toBe('http');
       expect(result.error.message).toContain('Invalid request body');
+      expect(result.error.code).toBe('INVALID_INPUT');
+      expect(result.error.requestId).toBe('cccccccc-cccc-4ccc-8ccc-cccccccccccc');
     }
   });
 });
