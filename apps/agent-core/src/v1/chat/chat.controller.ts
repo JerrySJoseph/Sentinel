@@ -11,6 +11,7 @@ import { chatRequestSchema } from '@sentinel/contracts';
 import { ChatService } from './chat.service';
 import type { Request } from 'express';
 import { AgentBusyError } from '@sentinel/agent';
+import { setRequestContext } from '@sentinel/observability';
 
 type ValidationIssue = {
   path: string;
@@ -46,6 +47,9 @@ export class ChatController {
       req.header('idempotency-key')?.toString() ?? req.header('x-idempotency-key')?.toString();
 
     const requestId = (req as Request & { requestId?: string }).requestId;
+    if (parsed.data.sessionId) {
+      setRequestContext({ sessionId: parsed.data.sessionId });
+    }
 
     try {
       return await this.chatService.runTurn({
