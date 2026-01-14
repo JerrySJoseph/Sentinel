@@ -5,7 +5,7 @@ function getTestDatabaseUrl(): string {
   const url =
     process.env.TEST_DATABASE_URL ??
     process.env.DATABASE_URL ??
-    'postgresql://sentinel:sentinel@localhost:5433/sentinel_test?schema=public';
+    'postgresql://sentinel:sentinel@127.0.0.1:5433/sentinel_test?schema=public';
 
   // Safety: avoid accidentally running against a non-test DB.
   if (!url.includes('sentinel_test')) {

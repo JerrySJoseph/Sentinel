@@ -10,7 +10,7 @@ describe('CORS (e2e)', () => {
     beforeAll(async () => {
         process.env.DATABASE_URL =
             process.env.DATABASE_URL ??
-            'postgresql://sentinel:sentinel@localhost:5433/sentinel_test?schema=public';
+            'postgresql://sentinel:sentinel@127.0.0.1:5433/sentinel_test?schema=public';
 
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [AppModule],
