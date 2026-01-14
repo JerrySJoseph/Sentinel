@@ -4,10 +4,12 @@ A modular, distributed-ready agent framework built with TypeScript + NestJS, des
 
 - **Quickstart**: see [`Quickstart.md`](Quickstart.md)
 - **Architecture overview**: see [`docs/architecture.md`](docs/architecture.md)
+- **Observability (ops guide)**: see [`docs/ops/observability.md`](docs/ops/observability.md)
 
 ## Table of Contents
 
 - [Quickstart](Quickstart.md)
+- [Observability](#observability)
 - [Overview](#1-overview)
 - [What This Project Is (and Is Not)](#2-what-this-project-is-and-is-not)
 - [Core Concepts](#3-core-concepts)
@@ -27,6 +29,12 @@ A modular, distributed-ready agent framework built with TypeScript + NestJS, des
 - [Extensibility Guide](#17-extensibility-guide)
 - [Roadmap](#18-roadmap-high-level)
 - [Contributing](#19-contributing)
+
+## Observability
+
+- **Metrics**: `GET /metrics` (Prometheus text format)
+- **Logs**: JSON logs include correlation fields (`requestId`, `sessionId`, optional `traceId/spanId`)
+- Guide: [`docs/ops/observability.md`](docs/ops/observability.md)
 
 ## 1. Overview
 

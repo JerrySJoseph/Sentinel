@@ -30,6 +30,9 @@ export class RequestIdMiddleware implements NestMiddleware {
       parsed?.spanId ??
       (typeof req.header('x-span-id') === 'string' ? req.header('x-span-id') : undefined);
 
+    if (traceId) res.setHeader('x-trace-id', traceId);
+    if (spanId) res.setHeader('x-span-id', spanId);
+
     runWithRequestContext(
       {
         requestId,
