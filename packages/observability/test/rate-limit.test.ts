@@ -28,7 +28,7 @@ describe('rate limiting', () => {
       const r1 = await store.incrementWithTtl({ key, ttlMs: 20 });
       expect(r1.count).toBe(1);
 
-      await new Promise((r) => setTimeout(r, 30));
+      await new Promise(r => setTimeout(r, 30));
 
       const r2 = await store.incrementWithTtl({ key, ttlMs: 20 });
       expect(r2.count).toBe(1);
@@ -46,7 +46,7 @@ describe('rate limiting', () => {
         Array.from({ length: 50 }, () => store.incrementWithTtl({ key, ttlMs }))
       );
 
-      const counts = results.map((r) => r.count).sort((a, b) => a - b);
+      const counts = results.map(r => r.count).sort((a, b) => a - b);
       expect(counts[0]).toBe(1);
       expect(counts[counts.length - 1]).toBe(50);
 
@@ -54,7 +54,7 @@ describe('rate limiting', () => {
       expect(counts).toEqual(Array.from({ length: 50 }, (_, i) => i + 1));
 
       // All increments should share the same expiry (fixed window).
-      const expires = new Set(results.map((r) => r.expiresAtMs));
+      const expires = new Set(results.map(r => r.expiresAtMs));
       expect(expires.size).toBe(1);
 
       await store.close();
@@ -79,7 +79,7 @@ describe('rate limiting', () => {
       expect(a4.remaining).toBe(0);
       expect(a4.retryAfterMs).toBeGreaterThanOrEqual(0);
 
-      await new Promise((r) => setTimeout(r, 60));
+      await new Promise(r => setTimeout(r, 60));
 
       const b1 = await rl.consume({ key, limit: 3, windowMs: 50 });
       expect(b1.allowed).toBe(true);
@@ -89,4 +89,3 @@ describe('rate limiting', () => {
     });
   });
 });
-

@@ -43,4 +43,3 @@ export class ToolUserError extends Error {
     this.details = details;
   }
 }
-

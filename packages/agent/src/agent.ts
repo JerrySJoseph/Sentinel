@@ -44,7 +44,7 @@ export class Agent {
         tool?: ConcurrencyLimiter;
       };
     }
-  ) { }
+  ) {}
 
   async runTurn(input: RunTurnInput): Promise<ChatResponse> {
     const startTimeMs = Date.now();
@@ -99,7 +99,7 @@ export class Agent {
     const plan = PlanOutputSchema.parse(planUnknown);
 
     // Validate tool call shapes before executing.
-    const toolCalls: ToolCall[] = plan.toolCalls.map((tc) => toolCallSchema.parse(tc));
+    const toolCalls: ToolCall[] = plan.toolCalls.map(tc => toolCallSchema.parse(tc));
 
     const toolResults: ToolResult[] = [];
     const toolTraceSteps: AgentTraceStep[] = [];
@@ -193,9 +193,13 @@ export class Agent {
       { role: 'assistant', content: response.finalResponse, createdAt: endedAt },
     ]);
 
-    await this.deps.memory.appendToolRuns(sessionId, { requestId, idempotencyKey }, toolCalls, toolResults);
+    await this.deps.memory.appendToolRuns(
+      sessionId,
+      { requestId, idempotencyKey },
+      toolCalls,
+      toolResults
+    );
 
     return chatResponseSchema.parse(response);
   }
 }
-

@@ -12,7 +12,7 @@ describe('request context (AsyncLocalStorage)', () => {
         await Promise.resolve();
         expect(getRequestContext()?.requestId).toBe('req-1');
 
-        await new Promise<void>((resolve) =>
+        await new Promise<void>(resolve =>
           setTimeout(() => {
             expect(getRequestContext()?.traceId).toBe('trace-1');
             resolve();
@@ -31,4 +31,3 @@ describe('request context (AsyncLocalStorage)', () => {
     });
   });
 });
-

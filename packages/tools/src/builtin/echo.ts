@@ -25,9 +25,8 @@ export class EchoTool implements Tool<z.infer<typeof echoArgsSchema>> {
   readonly risk = 'safe' as const;
   readonly argsSchema = echoArgsSchema;
 
-  async execute(args: z.infer<typeof echoArgsSchema>, _ctx: ToolContext): Promise<JsonValue> {
+  execute(args: z.infer<typeof echoArgsSchema>, _ctx: ToolContext): Promise<JsonValue> {
     // Validate output shape as defense-in-depth.
-    return echoResultSchema.parse({ echoed: args.text, length: args.text.length });
+    return Promise.resolve(echoResultSchema.parse({ echoed: args.text, length: args.text.length }));
   }
 }
-

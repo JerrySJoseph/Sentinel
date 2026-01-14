@@ -12,4 +12,3 @@ export function createPrismaClient(options: CreatePrismaClientOptions = {}): Pri
     datasources: databaseUrl ? { db: { url: databaseUrl } } : undefined,
   });
 }
-

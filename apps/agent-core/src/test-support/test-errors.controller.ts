@@ -23,4 +23,3 @@ export class TestErrorsController {
     throw new Error('boom');
   }
 }
-

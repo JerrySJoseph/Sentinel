@@ -43,7 +43,7 @@ export class InMemoryConcurrencyStore implements ConcurrencyStore {
       throw new Error('InMemoryConcurrencyStore: ttlMs must be a positive number');
     }
 
-    return await this.withKeyLock(input.key, async () => {
+    return await this.withKeyLock(input.key, () => {
       const now = this.nowMs();
       const expiresAtMs = now + input.ttlMs;
 
@@ -63,7 +63,9 @@ export class InMemoryConcurrencyStore implements ConcurrencyStore {
           if (lease.expiresAtMs < minExpires) minExpires = lease.expiresAtMs;
         }
         const retryAfterMs =
-          Number.isFinite(minExpires) && minExpires !== Infinity ? Math.max(0, minExpires - now) : undefined;
+          Number.isFinite(minExpires) && minExpires !== Infinity
+            ? Math.max(0, minExpires - now)
+            : undefined;
         return { acquired: false, leaseId: input.leaseId, count, retryAfterMs };
       }
 
@@ -75,7 +77,7 @@ export class InMemoryConcurrencyStore implements ConcurrencyStore {
   async release(input: ReleaseLeaseInput): Promise<ReleaseLeaseResult> {
     if (this.closed) return { released: false, count: 0 };
 
-    return await this.withKeyLock(input.key, async () => {
+    return await this.withKeyLock(input.key, () => {
       const leases = this.leasesByKey.get(input.key);
       if (!leases) return { released: false, count: 0 };
 
@@ -86,20 +88,21 @@ export class InMemoryConcurrencyStore implements ConcurrencyStore {
     });
   }
 
-  async close(): Promise<void> {
+  close(): Promise<void> {
     this.closed = true;
     this.leasesByKey.clear();
     this.locks.clear();
+    return Promise.resolve();
   }
 
-  private async withKeyLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  private async withKeyLock<T>(key: string, fn: () => T | Promise<T>): Promise<T> {
     const lock = this.locks.get(key) ?? { tail: Promise.resolve() };
     this.locks.set(key, lock);
 
     const prev = lock.tail;
 
     let release!: () => void;
-    lock.tail = new Promise<void>((r) => {
+    lock.tail = new Promise<void>(r => {
       release = r;
     });
 
@@ -111,4 +114,3 @@ export class InMemoryConcurrencyStore implements ConcurrencyStore {
     }
   }
 }
-

@@ -51,4 +51,3 @@ export class ProviderRegistry {
 function isToggleableProvider(provider: LLMProvider): provider is ToggleableProvider {
   return typeof (provider as ToggleableProvider).isEnabled === 'function';
 }
-

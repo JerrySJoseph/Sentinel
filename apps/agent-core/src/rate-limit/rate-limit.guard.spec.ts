@@ -3,11 +3,7 @@ import { RateLimitGuard } from './rate-limit.guard';
 import { InMemoryRateLimitStore, RateLimiter } from '@sentinel/observability';
 import type { AgentCoreConfig } from '@sentinel/config';
 
-function makeContext(input: {
-  requestId?: string;
-  ip?: string;
-  headers?: Record<string, string>;
-}) {
+function makeContext(input: { requestId?: string; ip?: string; headers?: Record<string, string> }) {
   const req = {
     requestId: input.requestId,
     ip: input.ip,
@@ -65,4 +61,3 @@ describe('RateLimitGuard', () => {
     }
   });
 });
-

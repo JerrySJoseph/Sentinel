@@ -7,9 +7,14 @@ import type { Request } from 'express';
 describe('ChatController (busy errors)', () => {
   it('maps PROVIDER_BUSY to 503 structured error with requestId', async () => {
     const chatService = {
-      runTurn: async () => {
-        throw new AgentBusyError({ code: 'PROVIDER_BUSY', message: 'Provider is at capacity', retryAfterMs: 123 });
-      },
+      runTurn: () =>
+        Promise.reject(
+          new AgentBusyError({
+            code: 'PROVIDER_BUSY',
+            message: 'Provider is at capacity',
+            retryAfterMs: 123,
+          })
+        ),
     };
 
     const moduleRef = await Test.createTestingModule({
@@ -35,4 +40,3 @@ describe('ChatController (busy errors)', () => {
     });
   });
 });
-

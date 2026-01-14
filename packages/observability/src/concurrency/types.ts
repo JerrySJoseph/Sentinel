@@ -46,4 +46,3 @@ export interface ConcurrencyStore {
   release(input: ReleaseLeaseInput): Promise<ReleaseLeaseResult>;
   close(): Promise<void>;
 }
-

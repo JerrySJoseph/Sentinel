@@ -20,7 +20,8 @@ export class RequestIdMiddleware implements NestMiddleware {
     (req as Request & { requestId?: string }).requestId = requestId;
     res.setHeader('x-request-id', requestId);
 
-    const traceparent = typeof req.header('traceparent') === 'string' ? req.header('traceparent') : undefined;
+    const traceparent =
+      typeof req.header('traceparent') === 'string' ? req.header('traceparent') : undefined;
     const parsed = traceparent ? parseTraceparent(traceparent) : null;
 
     const traceId =
@@ -43,4 +44,3 @@ export class RequestIdMiddleware implements NestMiddleware {
     );
   }
 }
-

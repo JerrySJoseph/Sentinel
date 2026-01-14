@@ -182,7 +182,8 @@ function evalRpn(tokens: Token[]): number {
     }
     const b = stack.pop();
     const a = stack.pop();
-    if (a === undefined || b === undefined) throw new ToolUserError('INVALID_SYNTAX', 'Invalid expression');
+    if (a === undefined || b === undefined)
+      throw new ToolUserError('INVALID_SYNTAX', 'Invalid expression');
     switch (t.value) {
       case '+':
         stack.push(a + b);
@@ -213,11 +214,10 @@ export class CalculatorTool implements Tool<{ expression: string }> {
   readonly risk = 'safe' as const;
   readonly argsSchema = calculatorArgsSchema;
 
-  async execute(args: { expression: string }, _ctx: ToolContext): Promise<JsonValue> {
+  execute(args: { expression: string }, _ctx: ToolContext): Promise<JsonValue> {
     const tokens = tokenize(args.expression);
     const rpn = toRpn(tokens);
     const result = evalRpn(rpn);
-    return result;
+    return Promise.resolve(result);
   }
 }
-

@@ -8,8 +8,8 @@ function parseCorsOrigins(input: string | undefined | null): string[] {
 
   const origins = raw
     .split(',')
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
 
   return origins.length > 0 ? origins : [...DEFAULT_CORS_ORIGINS];
 }
@@ -24,9 +24,7 @@ function parseCorsOrigins(input: string | undefined | null): string[] {
  * - Requests with no Origin header are allowed (non-browser / same-origin cases).
  * - Requests with an Origin not in the allowlist receive no CORS headers (browser will block).
  */
-export function createCorsOptionsFromEnv(
-  env: NodeJS.ProcessEnv = process.env,
-): CorsOptions {
+export function createCorsOptionsFromEnv(env: NodeJS.ProcessEnv = process.env): CorsOptions {
   const allowlist = new Set(parseCorsOrigins(env.CORS_ORIGINS));
 
   return {
@@ -36,5 +34,3 @@ export function createCorsOptionsFromEnv(
     },
   };
 }
-
-

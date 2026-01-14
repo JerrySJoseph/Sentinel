@@ -9,17 +9,17 @@ describe('Agent concurrency guardrails', () => {
     const providers = new ProviderRegistry();
 
     let started!: () => void;
-    const providerStarted = new Promise<void>((r) => {
+    const providerStarted = new Promise<void>(r => {
       started = r;
     });
     let finish!: () => void;
-    const providerFinish = new Promise<void>((r) => {
+    const providerFinish = new Promise<void>(r => {
       finish = r;
     });
 
     providers.register({
       name: 'slow-provider',
-      plan: async (input) => {
+      plan: async input => {
         started();
         await providerFinish;
         return {
@@ -56,7 +56,11 @@ describe('Agent concurrency guardrails', () => {
       concurrency: { provider: providerLimiter },
     });
 
-    const p1 = agent.runTurn({ message: 'one', provider: 'slow-provider', toolPolicy: { mode: 'safe' } });
+    const p1 = agent.runTurn({
+      message: 'one',
+      provider: 'slow-provider',
+      toolPolicy: { mode: 'safe' },
+    });
     await providerStarted;
 
     await expect(
@@ -75,36 +79,37 @@ describe('Agent concurrency guardrails', () => {
     const providers = new ProviderRegistry();
     providers.register({
       name: 'planner',
-      plan: async (input) => ({
-        toolCalls: [
-          {
-            id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            name: 'slow',
-            args: {},
-          },
-        ],
-        finalResponse: 'done',
-        trace: {
-          requestId: input.options.requestId,
-          sessionId: input.options.sessionId,
-          steps: [
+      plan: input =>
+        Promise.resolve({
+          toolCalls: [
             {
-              id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
-              kind: 'plan',
-              name: 'planner.plan',
-              startedAt: '2026-01-11T00:00:00.000Z',
+              id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+              name: 'slow',
+              args: {},
             },
           ],
-        },
-      }),
+          finalResponse: 'done',
+          trace: {
+            requestId: input.options.requestId,
+            sessionId: input.options.sessionId,
+            steps: [
+              {
+                id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
+                kind: 'plan',
+                name: 'planner.plan',
+                startedAt: '2026-01-11T00:00:00.000Z',
+              },
+            ],
+          },
+        }),
     });
 
     let toolStarted!: () => void;
-    const toolStartedP = new Promise<void>((r) => {
+    const toolStartedP = new Promise<void>(r => {
       toolStarted = r;
     });
     let toolFinish!: () => void;
-    const toolFinishP = new Promise<void>((r) => {
+    const toolFinishP = new Promise<void>(r => {
       toolFinish = r;
     });
 
@@ -149,4 +154,3 @@ describe('Agent concurrency guardrails', () => {
     await expect(p1).resolves.toEqual(expect.objectContaining({ finalResponse: 'done' }));
   });
 });
-

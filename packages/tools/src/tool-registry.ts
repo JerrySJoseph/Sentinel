@@ -25,4 +25,3 @@ export class ToolRegistry {
     return Array.from(this.tools.keys()).sort();
   }
 }
-

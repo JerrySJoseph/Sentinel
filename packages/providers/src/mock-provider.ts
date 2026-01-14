@@ -8,7 +8,7 @@ import { LLMProvider, PlanInput } from './types';
 export class MockProvider implements LLMProvider {
   readonly name = 'mock';
 
-  async plan(input: PlanInput) {
+  plan(input: PlanInput) {
     const startedAt = '2026-01-11T00:00:00.000Z';
     const endedAt = '2026-01-11T00:00:00.001Z';
 
@@ -22,18 +22,17 @@ export class MockProvider implements LLMProvider {
     // IMPORTANT: toolCall.id must be stable across retries when the same idempotency-key is used.
     // If we tie it to requestId, idempotency cannot work (requestId changes per request).
     const stableToolCallId = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
-    const toolCall =
-      echoMatch
-        ? {
-            id: stableToolCallId,
-            name: 'echo',
-            args: { text: echoMatch[1] },
-          }
-        : {
-            id: stableToolCallId,
-            name: 'calculator',
-            args: { expression: '1 + 2 * 3' },
-          };
+    const toolCall = echoMatch
+      ? {
+          id: stableToolCallId,
+          name: 'echo',
+          args: { text: echoMatch[1] },
+        }
+      : {
+          id: stableToolCallId,
+          name: 'calculator',
+          args: { expression: '1 + 2 * 3' },
+        };
 
     const output = {
       toolCalls: [toolCall],
@@ -56,7 +55,6 @@ export class MockProvider implements LLMProvider {
       },
     };
 
-    return PlanOutputSchema.parse(output);
+    return Promise.resolve(PlanOutputSchema.parse(output));
   }
 }
-

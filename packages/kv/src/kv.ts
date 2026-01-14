@@ -18,4 +18,3 @@ export interface KvBackend {
    */
   close(): Promise<void>;
 }
-

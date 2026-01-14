@@ -20,4 +20,3 @@ describe('MockProvider', () => {
     expect(out.toolCalls[0].name).toBe('calculator');
   });
 });
-

@@ -56,4 +56,3 @@ describe('ProviderRegistry', () => {
     expect(() => registry.resolve()).toThrow(ProviderRegistryError);
   });
 });
-

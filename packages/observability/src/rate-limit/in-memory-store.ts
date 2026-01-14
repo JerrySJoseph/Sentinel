@@ -29,7 +29,7 @@ export class InMemoryRateLimitStore implements RateLimitStore {
       throw new Error('InMemoryRateLimitStore: ttlMs must be a positive number');
     }
 
-    return await this.withKeyLock(input.key, async () => {
+    return await this.withKeyLock(input.key, () => {
       const now = Date.now();
       const existing = this.entries.get(input.key);
 
@@ -45,13 +45,14 @@ export class InMemoryRateLimitStore implements RateLimitStore {
     });
   }
 
-  async close(): Promise<void> {
+  close(): Promise<void> {
     this.closed = true;
     this.entries.clear();
     this.locks.clear();
+    return Promise.resolve();
   }
 
-  private async withKeyLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  private async withKeyLock<T>(key: string, fn: () => T | Promise<T>): Promise<T> {
     const lock = this.locks.get(key) ?? { tail: Promise.resolve() };
     this.locks.set(key, lock);
 
@@ -59,7 +60,7 @@ export class InMemoryRateLimitStore implements RateLimitStore {
 
     // Chain next tail *before* awaiting so concurrent callers serialize.
     let release!: () => void;
-    lock.tail = new Promise<void>((r) => {
+    lock.tail = new Promise<void>(r => {
       release = r;
     });
 
@@ -74,4 +75,3 @@ export class InMemoryRateLimitStore implements RateLimitStore {
     }
   }
 }
-

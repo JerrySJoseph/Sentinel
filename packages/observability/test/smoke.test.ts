@@ -6,4 +6,3 @@ describe('@sentinel/observability', () => {
     expect(ctx.requestId).toBe('req-1');
   });
 });
-

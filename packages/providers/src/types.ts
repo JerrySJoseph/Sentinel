@@ -20,4 +20,3 @@ export interface LLMProvider {
 export interface ToggleableProvider extends LLMProvider {
   isEnabled(): boolean;
 }
-

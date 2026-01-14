@@ -34,4 +34,3 @@ export interface RateLimitStore {
   incrementWithTtl(input: RateLimitIncrementInput): Promise<RateLimitIncrementResult>;
   close(): Promise<void>;
 }
-

@@ -9,9 +9,9 @@ describe('request context propagation', () => {
     const providers = new ProviderRegistry();
     providers.register({
       name: 'ctx-provider',
-      plan: async (input) => {
+      plan: input => {
         const ctx = getRequestContext();
-        return {
+        return Promise.resolve({
           toolCalls: [
             {
               id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
@@ -32,7 +32,7 @@ describe('request context propagation', () => {
               },
             ],
           },
-        };
+        });
       },
     });
 
@@ -41,9 +41,12 @@ describe('request context propagation', () => {
       description: 'returns request context',
       risk: 'safe',
       argsSchema: z.object({}).strict(),
-      execute: async () => {
+      execute: () => {
         const ctx = getRequestContext();
-        return { requestId: ctx?.requestId ?? null, sessionId: ctx?.sessionId ?? null };
+        return Promise.resolve({
+          requestId: ctx?.requestId ?? null,
+          sessionId: ctx?.sessionId ?? null,
+        });
       },
     };
 
@@ -74,9 +77,6 @@ describe('request context propagation', () => {
 
     expect(res.finalResponse).toBe(`rid:${requestId} sid:${sessionId}`);
     expect(res.toolResults[0].ok).toBe(true);
-    expect(res.toolResults[0].result).toEqual(
-      expect.objectContaining({ requestId, sessionId })
-    );
+    expect(res.toolResults[0].result).toEqual(expect.objectContaining({ requestId, sessionId }));
   });
 });
-

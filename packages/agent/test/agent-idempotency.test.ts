@@ -8,28 +8,29 @@ describe('Agent tool idempotency', () => {
     const providers = new ProviderRegistry();
     providers.register({
       name: 'planner',
-      plan: async (input) => ({
-        toolCalls: [
-          {
-            id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            name: 'counter',
-            args: {},
-          },
-        ],
-        finalResponse: `ok:${input.request.message}`,
-        trace: {
-          requestId: input.options.requestId,
-          sessionId: input.options.sessionId,
-          steps: [
+      plan: input =>
+        Promise.resolve({
+          toolCalls: [
             {
-              id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
-              kind: 'plan',
-              name: 'planner.plan',
-              startedAt: '2026-01-11T00:00:00.000Z',
+              id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+              name: 'counter',
+              args: {},
             },
           ],
-        },
-      }),
+          finalResponse: `ok:${input.request.message}`,
+          trace: {
+            requestId: input.options.requestId,
+            sessionId: input.options.sessionId,
+            steps: [
+              {
+                id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
+                kind: 'plan',
+                name: 'planner.plan',
+                startedAt: '2026-01-11T00:00:00.000Z',
+              },
+            ],
+          },
+        }),
     });
 
     let executions = 0;
@@ -38,9 +39,9 @@ describe('Agent tool idempotency', () => {
       description: 'counter',
       risk: 'safe',
       argsSchema: z.object({}).strict(),
-      execute: async () => {
+      execute: () => {
         executions += 1;
-        return executions;
+        return Promise.resolve(executions);
       },
     };
 
@@ -82,4 +83,3 @@ describe('Agent tool idempotency', () => {
     expect(res2.toolResults[0].result).toBe(1);
   });
 });
-

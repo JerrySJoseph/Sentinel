@@ -38,7 +38,9 @@ export class RateLimitGuard implements CanActivate {
     const requestId = req.requestId ?? 'unknown';
 
     // Best-effort retry-after header in seconds (common convention).
-    const res = context.switchToHttp().getResponse<{ setHeader(name: string, value: string): void }>();
+    const res = context
+      .switchToHttp()
+      .getResponse<{ setHeader(name: string, value: string): void }>();
     if (Number.isFinite(decision.retryAfterMs) && decision.retryAfterMs > 0) {
       res.setHeader('retry-after', String(Math.ceil(decision.retryAfterMs / 1000)));
     }
@@ -65,4 +67,3 @@ export class RateLimitGuard implements CanActivate {
     return typeof ra === 'string' && ra.length > 0 ? ra : 'unknown';
   }
 }
-

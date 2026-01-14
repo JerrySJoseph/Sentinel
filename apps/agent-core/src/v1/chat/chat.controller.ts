@@ -21,14 +21,14 @@ type ValidationIssue = {
 
 @Controller('v1/chat')
 export class ChatController {
-  constructor(private readonly chatService: ChatService) { }
+  constructor(private readonly chatService: ChatService) {}
 
   @Post()
   @HttpCode(200)
   async chat(@Req() req: Request, @Body() body: unknown) {
     const parsed = chatRequestSchema.safeParse(body);
     if (!parsed.success) {
-      const issues: ValidationIssue[] = parsed.error.issues.map((issue) => ({
+      const issues: ValidationIssue[] = parsed.error.issues.map(issue => ({
         path: issue.path.length ? issue.path.join('.') : '(root)',
         message: issue.message,
         code: issue.code,
@@ -71,4 +71,3 @@ export class ChatController {
     }
   }
 }
-

@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import type { Server } from 'http';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 
 describe('Redis unavailable (e2e)', () => {
   let app: INestApplication;
+  let server: Server;
 
   beforeAll(async () => {
     process.env.DATABASE_URL =
@@ -20,6 +22,7 @@ describe('Redis unavailable (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    server = app.getHttpServer() as unknown as Server;
   });
 
   afterAll(async () => {
@@ -27,13 +30,12 @@ describe('Redis unavailable (e2e)', () => {
   });
 
   it('/health (GET) should still be OK', () => {
-    return request(app.getHttpServer())
+    return request(server)
       .get('/health')
       .expect(200)
-      .expect((res) => {
+      .expect(res => {
         expect(res.headers['x-request-id']).toEqual(expect.any(String));
         expect(res.body).toEqual({ status: 'ok' });
       });
   });
 });
-

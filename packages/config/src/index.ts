@@ -78,13 +78,11 @@ export type AgentCoreConfig = {
   };
 };
 
-export function loadAgentCoreConfig(
-  env: Record<string, unknown> = process.env
-): AgentCoreConfig {
+export function loadAgentCoreConfig(env: Record<string, unknown> = process.env): AgentCoreConfig {
   const parsed = agentCoreEnvSchema.safeParse(env);
   if (!parsed.success) {
     const issues = parsed.error.issues
-      .map((i) => `${i.path.join('.') || 'env'}: ${i.message}`)
+      .map(i => `${i.path.join('.') || 'env'}: ${i.message}`)
       .join(', ');
     throw new Error(`Invalid agent-core environment: ${issues}`);
   }
@@ -94,7 +92,9 @@ export function loadAgentCoreConfig(
     port: parsed.data.PORT,
     databaseUrl: parsed.data.DATABASE_URL,
     corsOrigins: parsed.data.CORS_ORIGINS,
-    redis: parsed.data.REDIS_URL ? { enabled: true, url: parsed.data.REDIS_URL } : { enabled: false },
+    redis: parsed.data.REDIS_URL
+      ? { enabled: true, url: parsed.data.REDIS_URL }
+      : { enabled: false },
     rateLimit: {
       enabled: parsed.data.RATE_LIMIT_ENABLED ?? true,
       perIp: {
@@ -111,4 +111,3 @@ export function loadAgentCoreConfig(
     },
   };
 }
-

@@ -72,7 +72,12 @@ export class MetricsService {
     });
   }
 
-  observeHttp(input: { method: string; route: string; statusCode: number; durationSeconds: number }): void {
+  observeHttp(input: {
+    method: string;
+    route: string;
+    statusCode: number;
+    durationSeconds: number;
+  }): void {
     const labels: LabelsHttp = {
       method: input.method,
       route: input.route,
@@ -106,4 +111,3 @@ export class MetricsService {
     return new Histogram<T>({ ...cfg, registers: [this.registry] });
   }
 }
-

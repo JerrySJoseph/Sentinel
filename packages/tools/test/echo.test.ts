@@ -44,4 +44,3 @@ describe('EchoTool', () => {
     expect(res.error?.code).toBe('INVALID_TOOL_ARGS');
   });
 });
-

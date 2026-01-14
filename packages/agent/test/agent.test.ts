@@ -7,16 +7,15 @@ import {
 import { ToolRegistry } from '@sentinel/tools';
 import { Agent, InMemoryMemoryPort } from '../src';
 
-const UUID_V4_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 describe('Agent', () => {
   it('returns a ChatResponse for a direct response with no tools', async () => {
     const providers = new ProviderRegistry();
     providers.register({
       name: 'no-tools',
-      plan: async (input) => {
-        return {
+      plan: input =>
+        Promise.resolve({
           toolCalls: [],
           finalResponse: `Echo: ${input.request.message}`,
           trace: {
@@ -31,8 +30,7 @@ describe('Agent', () => {
               },
             ],
           },
-        };
-      },
+        }),
     });
 
     const agent = new Agent({
@@ -78,13 +76,12 @@ describe('Agent', () => {
     const providers = new ProviderRegistry();
     const badProvider = {
       name: 'bad',
-      plan: async (_input: PlanInput): Promise<unknown> => {
-        return {
+      plan: (_input: PlanInput): Promise<unknown> =>
+        Promise.resolve({
           toolCalls: 'not-an-array',
           finalResponse: 123,
           trace: {},
-        };
-      },
+        }),
     } as unknown as LLMProvider;
 
     providers.register(badProvider);
@@ -105,4 +102,3 @@ describe('Agent', () => {
     ).rejects.toThrow();
   });
 });
-
