@@ -24,8 +24,10 @@ export function createHealthCommand(httpClient: HttpClient): Command {
 
         if (error instanceof Error) {
           // Handle AggregateError (from undici)
-          if ('errors' in error && Array.isArray(error.errors)) {
-            const firstError = error.errors[0];
+          const aggErrors = (error as { errors?: unknown }).errors;
+          if (Array.isArray(aggErrors)) {
+            const errors = aggErrors as unknown[];
+            const firstError = errors[0];
             if (firstError instanceof Error) {
               errorMessage = firstError.message || error.message || 'Connection failed';
             } else {

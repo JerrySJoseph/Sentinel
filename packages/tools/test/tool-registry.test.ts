@@ -9,7 +9,7 @@ describe('ToolRegistry', () => {
       description: 'test',
       risk: 'safe',
       argsSchema: z.object({}).strict(),
-      execute: async () => 'ok',
+      execute: () => Promise.resolve('ok'),
     };
 
     registry.register(tool);
@@ -25,7 +25,7 @@ describe('ToolRegistry', () => {
       description: 'test',
       risk: 'safe',
       argsSchema: z.object({}).strict(),
-      execute: async () => 'ok',
+      execute: () => Promise.resolve('ok'),
     };
 
     registry.register(tool);
@@ -37,4 +37,3 @@ describe('ToolRegistry', () => {
     expect(() => registry.get('missing')).toThrow(ToolNotFoundError);
   });
 });
-

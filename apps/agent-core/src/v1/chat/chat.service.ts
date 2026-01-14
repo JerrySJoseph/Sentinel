@@ -78,7 +78,7 @@ export class ChatService implements OnModuleDestroy {
     const name = provider.name;
     return {
       name,
-      plan: async (input) => {
+      plan: async input => {
         const startNs = process.hrtime.bigint();
         try {
           return await provider.plan(input);
@@ -108,4 +108,3 @@ export class ChatService implements OnModuleDestroy {
     };
   }
 }
-

@@ -30,8 +30,8 @@ function toToolError(err: unknown): ToolError {
       message: 'Invalid tool arguments',
       code: 'INVALID_TOOL_ARGS',
       details: {
-        issues: err.issues.map((i) => ({
-          path: i.path.map((p) => String(p)),
+        issues: err.issues.map(i => ({
+          path: i.path.map(p => String(p)),
           message: i.message,
         })),
       },
@@ -50,7 +50,7 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
     }, timeoutMs);
 
     promise
-      .then((val) => resolve(val))
+      .then(val => resolve(val))
       .catch(reject)
       .finally(() => clearTimeout(timer));
   });
@@ -144,4 +144,3 @@ export function createToolCall(name: string, args: JsonObject): ToolCall {
     args,
   };
 }
-

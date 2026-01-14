@@ -9,7 +9,7 @@
     "prebuild": "pnpm --filter @sentinel/contracts build",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --max-warnings=0",
     "pretest": "pnpm --filter @sentinel/contracts build",
     "test": "vitest run",
     "pretypecheck": "pnpm --filter @sentinel/contracts build",

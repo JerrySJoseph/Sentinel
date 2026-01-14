@@ -38,7 +38,9 @@ export class RateLimitGuard implements CanActivate {
     const requestId = req.requestId ?? 'unknown';
 
     // Best-effort retry-after header in seconds (common convention).
-    const res = context.switchToHttp().getResponse<{ setHeader(name: string, value: string): void }>();
+    const res = context
+      .switchToHttp()
+      .getResponse<{ setHeader(name: string, value: string): void }>();
     if (Number.isFinite(decision.retryAfterMs) && decision.retryAfterMs > 0) {
       res.setHeader('retry-after', String(Math.ceil(decision.retryAfterMs / 1000)));
     }
@@ -55,14 +57,20 @@ export class RateLimitGuard implements CanActivate {
   }
 
   private getClientIp(req: Request): string {
-    const xff = req.header('x-forwarded-for');
-    if (typeof xff === 'string' && xff.trim().length > 0) {
-      return xff.split(',')[0].trim();
+    const trustProxy = Boolean(
+      (req as unknown as { app?: { get?: (k: string) => unknown } }).app?.get?.('trust proxy')
+    );
+    if (trustProxy) {
+      // Only honor proxy headers when the app explicitly trusts proxies.
+      const xff = req.header('x-forwarded-for');
+      if (typeof xff === 'string' && xff.trim().length > 0) {
+        return xff.split(',')[0].trim();
+      }
     }
-    // Express computes req.ip (may be "::ffff:127.0.0.1" locally)
+
+    // Express computes req.ip (when trust proxy is disabled, this comes from remoteAddress).
     if (typeof req.ip === 'string' && req.ip.length > 0) return req.ip;
     const ra = req.socket?.remoteAddress;
     return typeof ra === 'string' && ra.length > 0 ? ra : 'unknown';
   }
 }
-

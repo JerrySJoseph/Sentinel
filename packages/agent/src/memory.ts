@@ -21,41 +21,43 @@ export class InMemoryMemoryPort implements MemoryPort {
   private readonly messagesBySessionId = new Map<string, ChatMessage[]>();
   private readonly toolRunsByKey = new Map<string, ToolResult>();
 
-  async ensureSession(_sessionId: string): Promise<void> {
+  ensureSession(_sessionId: string): Promise<void> {
     // no-op for in-memory
+    return Promise.resolve();
   }
 
-  async loadHistory(sessionId: string): Promise<ChatMessage[]> {
-    return this.messagesBySessionId.get(sessionId) ?? [];
+  loadHistory(sessionId: string): Promise<ChatMessage[]> {
+    return Promise.resolve(this.messagesBySessionId.get(sessionId) ?? []);
   }
 
-  async appendMessages(sessionId: string, messages: ChatMessage[]): Promise<void> {
+  appendMessages(sessionId: string, messages: ChatMessage[]): Promise<void> {
     const existing = this.messagesBySessionId.get(sessionId) ?? [];
     this.messagesBySessionId.set(sessionId, existing.concat(messages));
+    return Promise.resolve();
   }
 
-  async appendToolRuns(
+  appendToolRuns(
     sessionId: string,
     meta: { requestId: string; idempotencyKey: string },
     toolCalls: ToolCall[],
     toolResults: ToolResult[]
   ): Promise<void> {
-    const byId = new Map(toolCalls.map((tc) => [tc.id, tc]));
+    const byId = new Map(toolCalls.map(tc => [tc.id, tc]));
     for (const tr of toolResults) {
       const tc = byId.get(tr.toolCallId);
       if (!tc) continue;
       const key = `${sessionId}:${meta.idempotencyKey}:${tr.toolCallId}`;
       this.toolRunsByKey.set(key, tr);
     }
+    return Promise.resolve();
   }
 
-  async getToolResultByIdempotency(input: {
+  getToolResultByIdempotency(input: {
     sessionId: string;
     toolCallId: string;
     idempotencyKey: string;
   }): Promise<ToolResult | null> {
     const key = `${input.sessionId}:${input.idempotencyKey}:${input.toolCallId}`;
-    return this.toolRunsByKey.get(key) ?? null;
+    return Promise.resolve(this.toolRunsByKey.get(key) ?? null);
   }
 }
-

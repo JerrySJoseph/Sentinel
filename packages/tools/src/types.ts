@@ -22,4 +22,3 @@ export interface Tool<Args extends JsonObject = JsonObject> {
   readonly argsSchema: z.ZodType<Args>;
   execute(args: Args, ctx: ToolContext): Promise<JsonValue>;
 }
-

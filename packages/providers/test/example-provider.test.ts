@@ -47,4 +47,3 @@ describe('ExampleProvider', () => {
     expect(registry.has('example')).toBe(true);
   });
 });
-

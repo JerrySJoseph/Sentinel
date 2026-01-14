@@ -7,12 +7,14 @@ function makeContext(input: {
   requestId?: string;
   ip?: string;
   headers?: Record<string, string>;
+  trustProxy?: boolean;
 }) {
   const req = {
     requestId: input.requestId,
     ip: input.ip,
     header: (name: string) => input.headers?.[name.toLowerCase()],
     socket: { remoteAddress: input.ip },
+    app: { get: (k: string) => (k === 'trust proxy' ? Boolean(input.trustProxy) : undefined) },
   };
   const res = { setHeader: jest.fn() };
 
@@ -34,6 +36,7 @@ describe('RateLimitGuard', () => {
     const limiter = new RateLimiter(store);
     const cfg: AgentCoreConfig = {
       databaseUrl: 'postgresql://x',
+      trustProxy: true,
       redis: { enabled: false },
       rateLimit: { enabled: true, perIp: { limit: 1, windowMs: 60_000 }, store: 'memory' },
       concurrency: { providerMax: 1, toolMax: 1, store: 'memory', leaseTtlMs: 10_000 },
@@ -45,6 +48,7 @@ describe('RateLimitGuard', () => {
     const { ctx } = makeContext({
       requestId: 'req-1',
       headers: { 'x-forwarded-for': '198.51.100.1' },
+      trustProxy: true,
     });
 
     await expect(guard.canActivate(ctx)).resolves.toBe(true);
@@ -64,5 +68,66 @@ describe('RateLimitGuard', () => {
       );
     }
   });
-});
 
+  it('ignores x-forwarded-for when trust proxy is disabled (prevents spoofing)', async () => {
+    const store = new InMemoryRateLimitStore();
+    const limiter = new RateLimiter(store);
+    const cfg: AgentCoreConfig = {
+      databaseUrl: 'postgresql://x',
+      trustProxy: false,
+      redis: { enabled: false },
+      rateLimit: { enabled: true, perIp: { limit: 1, windowMs: 60_000 }, store: 'memory' },
+      concurrency: { providerMax: 1, toolMax: 1, store: 'memory', leaseTtlMs: 10_000 },
+    };
+
+    const guard = new RateLimitGuard(limiter, cfg);
+
+    const c1 = makeContext({
+      requestId: 'req-1',
+      ip: '10.0.0.1',
+      headers: { 'x-forwarded-for': '198.51.100.1' },
+      trustProxy: false,
+    });
+    await expect(guard.canActivate(c1.ctx)).resolves.toBe(true);
+
+    // Same remote address, different spoofed header -> should still count against same key.
+    const c2 = makeContext({
+      requestId: 'req-2',
+      ip: '10.0.0.1',
+      headers: { 'x-forwarded-for': '198.51.100.2' },
+      trustProxy: false,
+    });
+    await expect(guard.canActivate(c2.ctx)).rejects.toBeInstanceOf(HttpException);
+  });
+
+  it('uses x-forwarded-for when trust proxy is enabled', async () => {
+    const store = new InMemoryRateLimitStore();
+    const limiter = new RateLimiter(store);
+    const cfg: AgentCoreConfig = {
+      databaseUrl: 'postgresql://x',
+      trustProxy: true,
+      redis: { enabled: false },
+      rateLimit: { enabled: true, perIp: { limit: 1, windowMs: 60_000 }, store: 'memory' },
+      concurrency: { providerMax: 1, toolMax: 1, store: 'memory', leaseTtlMs: 10_000 },
+    };
+
+    const guard = new RateLimitGuard(limiter, cfg);
+
+    const c1 = makeContext({
+      requestId: 'req-1',
+      ip: '10.0.0.1',
+      headers: { 'x-forwarded-for': '198.51.100.1' },
+      trustProxy: true,
+    });
+    await expect(guard.canActivate(c1.ctx)).resolves.toBe(true);
+
+    // Same remote address, different forwarded-for -> should be a different key when trusted.
+    const c2 = makeContext({
+      requestId: 'req-2',
+      ip: '10.0.0.1',
+      headers: { 'x-forwarded-for': '198.51.100.2' },
+      trustProxy: true,
+    });
+    await expect(guard.canActivate(c2.ctx)).resolves.toBe(true);
+  });
+});

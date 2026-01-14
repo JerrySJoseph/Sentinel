@@ -1,4 +1,11 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
 import {
@@ -9,7 +16,11 @@ import {
   type JsonValue,
   jsonValueSchema,
 } from '@sentinel/contracts';
-import { ProviderConfigError, ProviderNotFoundError, ProviderRegistryError } from '@sentinel/providers';
+import {
+  ProviderConfigError,
+  ProviderNotFoundError,
+  ProviderRegistryError,
+} from '@sentinel/providers';
 import { ToolNotFoundError, ToolPolicyError, ToolUserError } from '@sentinel/tools';
 import { AgentBusyError } from '@sentinel/agent';
 import { MetricsService } from '../metrics/metrics.service';
@@ -40,10 +51,10 @@ function toIssuesFromUnknown(input: unknown): ErrorIssue[] | undefined {
 function normalizeCode(input: { statusCode: number; rawCode?: string }): SentinelErrorCode {
   if (input.rawCode === 'VALIDATION_ERROR') return 'INVALID_INPUT';
   if (input.rawCode && ErrorResponseSchema.shape.code.safeParse(input.rawCode).success) {
-    return input.rawCode as SentinelErrorCode;
+    return input.rawCode;
   }
-  if (input.statusCode === HttpStatus.BAD_REQUEST) return 'INVALID_INPUT';
-  if (input.statusCode === HttpStatus.TOO_MANY_REQUESTS) return 'RATE_LIMITED';
+  if (input.statusCode === 400) return 'INVALID_INPUT';
+  if (input.statusCode === 429) return 'RATE_LIMITED';
   return 'INTERNAL_ERROR';
 }
 
@@ -99,9 +110,9 @@ export class SentinelExceptionFilter implements ExceptionFilter {
     } else if (exception instanceof ToolUserError) {
       statusCode = HttpStatus.BAD_REQUEST;
       // Preserve user-facing codes, but normalize to TOOL_* when possible.
-      code = (String(exception.code).startsWith('TOOL_')
-        ? (exception.code as SentinelErrorCode)
-        : ('INVALID_INPUT' as SentinelErrorCode)) as SentinelErrorCode;
+      code = String(exception.code).startsWith('TOOL_')
+        ? exception.code
+        : ('INVALID_INPUT' as SentinelErrorCode);
       message = exception.message || 'Invalid tool input';
       details = exception.details;
     } else if (isZodErrorLike(exception)) {
@@ -112,7 +123,7 @@ export class SentinelExceptionFilter implements ExceptionFilter {
       for (const rawIssue of exception.issues) {
         if (!rawIssue || typeof rawIssue !== 'object') continue;
         const rec = rawIssue as Record<string, unknown>;
-        const pathParts = Array.isArray(rec.path) ? rec.path.map((p) => String(p)) : [];
+        const pathParts = Array.isArray(rec.path) ? rec.path.map(p => String(p)) : [];
         const path = pathParts.length ? pathParts.join('.') : '(root)';
         const msg = typeof rec.message === 'string' ? rec.message : 'Invalid';
         const c = typeof rec.code === 'string' ? rec.code : undefined;
@@ -124,7 +135,8 @@ export class SentinelExceptionFilter implements ExceptionFilter {
       const raw = exception.getResponse();
 
       let rawObj: Record<string, unknown> | undefined;
-      if (raw && typeof raw === 'object' && !Array.isArray(raw)) rawObj = raw as Record<string, unknown>;
+      if (raw && typeof raw === 'object' && !Array.isArray(raw))
+        rawObj = raw as Record<string, unknown>;
 
       const rawCode = rawObj && typeof rawObj.code === 'string' ? rawObj.code : undefined;
       code = normalizeCode({ statusCode, rawCode });
@@ -181,4 +193,3 @@ export class SentinelExceptionFilter implements ExceptionFilter {
     res.status(out.statusCode).json(out);
   }
 }
-

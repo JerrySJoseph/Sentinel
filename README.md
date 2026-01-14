@@ -35,6 +35,7 @@ A modular, distributed-ready agent framework built with TypeScript + NestJS, des
 - **Metrics**: `GET /metrics` (Prometheus text format)
 - **Logs**: JSON logs include correlation fields (`requestId`, `sessionId`, optional `traceId/spanId`)
 - Guide: [`docs/ops/observability.md`](docs/ops/observability.md)
+- **Go-live checklist**: [`docs/ops/go-live-checklist.md`](docs/ops/go-live-checklist.md)
 
 ## 1. Overview
 

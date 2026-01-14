@@ -18,7 +18,6 @@ type ChatUiMessage = {
 
 function newId(): string {
   // `crypto.randomUUID` is available in modern browsers; fall back for safety.
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
 }
 

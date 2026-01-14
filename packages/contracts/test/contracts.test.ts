@@ -194,4 +194,3 @@ describe('@sentinel/contracts schemas', () => {
     });
   });
 });
-

@@ -14,4 +14,3 @@ export const AGENT_CORE_CONFIG = 'AGENT_CORE_CONFIG';
   exports: [AGENT_CORE_CONFIG],
 })
 export class ConfigModule {}
-

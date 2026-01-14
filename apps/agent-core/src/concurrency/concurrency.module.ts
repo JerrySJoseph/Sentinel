@@ -20,7 +20,7 @@ import {
       provide: CONCURRENCY_STORE,
       useFactory: (cfg: AgentCoreConfig): ConcurrencyStore => {
         const mode = cfg.concurrency.store;
-        const nodeEnv = cfg.nodeEnv ?? (process.env.NODE_ENV as any) ?? 'development';
+        const nodeEnv = cfg.nodeEnv ?? 'development';
 
         // Always deterministic for tests.
         if (nodeEnv === 'test') return new InMemoryConcurrencyStore();
@@ -33,8 +33,7 @@ import {
             keyPrefix: 'sentinel:conc:',
             suppressConnectionErrors: nodeEnv !== 'production',
             logger: {
-              warn: (msg, meta) =>
-                Logger.warn(JSON.stringify({ msg, ...meta }), 'Concurrency'),
+              warn: (msg, meta) => Logger.warn(JSON.stringify({ msg, ...meta }), 'Concurrency'),
             },
           });
         };
@@ -73,11 +72,13 @@ import {
 })
 export class ConcurrencyModule implements OnModuleDestroy {
   constructor(@Inject(CONCURRENCY_STORE) private readonly store: ConcurrencyStore) {
-    Logger.log(JSON.stringify({ msg: 'concurrency_module_loaded', kind: store.kind }), 'Concurrency');
+    Logger.log(
+      JSON.stringify({ msg: 'concurrency_module_loaded', kind: store.kind }),
+      'Concurrency'
+    );
   }
 
   async onModuleDestroy(): Promise<void> {
     await this.store.close();
   }
 }
-

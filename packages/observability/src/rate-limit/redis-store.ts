@@ -4,10 +4,7 @@ type RedisClientLike = {
   connect(): Promise<void>;
   quit(): Promise<void>;
   disconnect?: () => void;
-  eval(
-    script: string,
-    options: { keys: string[]; arguments: string[] }
-  ): Promise<unknown>;
+  eval(script: string, options: { keys: string[]; arguments: string[] }): Promise<unknown>;
 };
 
 export type RateLimitLogger = {
@@ -170,4 +167,3 @@ export function createRedisRateLimitStore(
 ): RedisRateLimitStore {
   return new RedisRateLimitStore(options);
 }
-

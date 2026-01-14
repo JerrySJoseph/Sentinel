@@ -10,5 +10,4 @@ import { MetricsModule } from '../../metrics/metrics.module';
   controllers: [ChatController],
   providers: [ChatService],
 })
-export class ChatModule { }
-
+export class ChatModule {}

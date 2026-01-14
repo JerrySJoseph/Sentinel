@@ -8,28 +8,29 @@ describe('Agent tool execution', () => {
     const providers = new ProviderRegistry();
     providers.register({
       name: 'planner',
-      plan: async (input) => ({
-        toolCalls: [
-          {
-            id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            name: 'calculator',
-            args: { expression: '1 + 2 * 3' },
-          },
-        ],
-        finalResponse: 'computed',
-        trace: {
-          requestId: input.options.requestId,
-          sessionId: input.options.sessionId,
-          steps: [
+      plan: input =>
+        Promise.resolve({
+          toolCalls: [
             {
-              id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
-              kind: 'plan',
-              name: 'planner.plan',
-              startedAt: '2026-01-11T00:00:00.000Z',
+              id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+              name: 'calculator',
+              args: { expression: '1 + 2 * 3' },
             },
           ],
-        },
-      }),
+          finalResponse: 'computed',
+          trace: {
+            requestId: input.options.requestId,
+            sessionId: input.options.sessionId,
+            steps: [
+              {
+                id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
+                kind: 'plan',
+                name: 'planner.plan',
+                startedAt: '2026-01-11T00:00:00.000Z',
+              },
+            ],
+          },
+        }),
     });
 
     const tools = new ToolRegistry();
@@ -53,7 +54,7 @@ describe('Agent tool execution', () => {
     expect(res.toolResults[0].name).toBe('calculator');
     expect(res.toolResults[0].result).toBe(7);
 
-    const toolSteps = res.trace.steps.filter((s) => s.kind === 'tool');
+    const toolSteps = res.trace.steps.filter(s => s.kind === 'tool');
     expect(toolSteps).toHaveLength(1);
     expect(toolSteps[0].name).toBe('calculator');
   });
@@ -62,28 +63,29 @@ describe('Agent tool execution', () => {
     const providers = new ProviderRegistry();
     providers.register({
       name: 'planner',
-      plan: async (input) => ({
-        toolCalls: [
-          {
-            id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            name: 'echo',
-            args: { text: 'hi' },
-          },
-        ],
-        finalResponse: 'echoed',
-        trace: {
-          requestId: input.options.requestId,
-          sessionId: input.options.sessionId,
-          steps: [
+      plan: input =>
+        Promise.resolve({
+          toolCalls: [
             {
-              id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
-              kind: 'plan',
-              name: 'planner.plan',
-              startedAt: '2026-01-11T00:00:00.000Z',
+              id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+              name: 'echo',
+              args: { text: 'hi' },
             },
           ],
-        },
-      }),
+          finalResponse: 'echoed',
+          trace: {
+            requestId: input.options.requestId,
+            sessionId: input.options.sessionId,
+            steps: [
+              {
+                id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
+                kind: 'plan',
+                name: 'planner.plan',
+                startedAt: '2026-01-11T00:00:00.000Z',
+              },
+            ],
+          },
+        }),
     });
 
     const tools = new ToolRegistry();
@@ -110,7 +112,7 @@ describe('Agent tool execution', () => {
     expect(res.toolResults[0].name).toBe('echo');
     expect(res.toolResults[0].result).toEqual({ echoed: 'hi', length: 2 });
 
-    const toolSteps = res.trace.steps.filter((s) => s.kind === 'tool');
+    const toolSteps = res.trace.steps.filter(s => s.kind === 'tool');
     expect(toolSteps).toHaveLength(1);
     expect(toolSteps[0].name).toBe('echo');
   });
@@ -119,28 +121,29 @@ describe('Agent tool execution', () => {
     const providers = new ProviderRegistry();
     providers.register({
       name: 'planner',
-      plan: async (input) => ({
-        toolCalls: [
-          {
-            id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            name: 'missing_tool',
-            args: {},
-          },
-        ],
-        finalResponse: 'no tool',
-        trace: {
-          requestId: input.options.requestId,
-          sessionId: input.options.sessionId,
-          steps: [
+      plan: input =>
+        Promise.resolve({
+          toolCalls: [
             {
-              id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
-              kind: 'plan',
-              name: 'planner.plan',
-              startedAt: '2026-01-11T00:00:00.000Z',
+              id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+              name: 'missing_tool',
+              args: {},
             },
           ],
-        },
-      }),
+          finalResponse: 'no tool',
+          trace: {
+            requestId: input.options.requestId,
+            sessionId: input.options.sessionId,
+            steps: [
+              {
+                id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
+                kind: 'plan',
+                name: 'planner.plan',
+                startedAt: '2026-01-11T00:00:00.000Z',
+              },
+            ],
+          },
+        }),
     });
 
     const agent = new Agent({
@@ -165,28 +168,29 @@ describe('Agent tool execution', () => {
     const providers = new ProviderRegistry();
     providers.register({
       name: 'planner',
-      plan: async (input) => ({
-        toolCalls: [
-          {
-            id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            name: 'slow',
-            args: {},
-          },
-        ],
-        finalResponse: 'done',
-        trace: {
-          requestId: input.options.requestId,
-          sessionId: input.options.sessionId,
-          steps: [
+      plan: input =>
+        Promise.resolve({
+          toolCalls: [
             {
-              id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
-              kind: 'plan',
-              name: 'planner.plan',
-              startedAt: '2026-01-11T00:00:00.000Z',
+              id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+              name: 'slow',
+              args: {},
             },
           ],
-        },
-      }),
+          finalResponse: 'done',
+          trace: {
+            requestId: input.options.requestId,
+            sessionId: input.options.sessionId,
+            steps: [
+              {
+                id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
+                kind: 'plan',
+                name: 'planner.plan',
+                startedAt: '2026-01-11T00:00:00.000Z',
+              },
+            ],
+          },
+        }),
     });
 
     const tools = new ToolRegistry();
@@ -195,7 +199,7 @@ describe('Agent tool execution', () => {
       description: 'slow',
       risk: 'safe',
       argsSchema: z.object({}).strict(),
-      execute: async () => new Promise((resolve) => setTimeout(() => resolve('ok'), 50)),
+      execute: () => new Promise(resolve => setTimeout(() => resolve('ok'), 50)),
     };
     tools.register(slowTool);
 
@@ -221,28 +225,29 @@ describe('Agent tool execution', () => {
     const providers = new ProviderRegistry();
     providers.register({
       name: 'planner',
-      plan: async (input) => ({
-        toolCalls: [
-          {
-            id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            name: 'calculator',
-            args: { expression: '1 + 2 * 3' },
-          },
-        ],
-        finalResponse: 'computed',
-        trace: {
-          requestId: input.options.requestId,
-          sessionId: input.options.sessionId,
-          steps: [
+      plan: input =>
+        Promise.resolve({
+          toolCalls: [
             {
-              id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
-              kind: 'plan',
-              name: 'planner.plan',
-              startedAt: '2026-01-11T00:00:00.000Z',
+              id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+              name: 'calculator',
+              args: { expression: '1 + 2 * 3' },
             },
           ],
-        },
-      }),
+          finalResponse: 'computed',
+          trace: {
+            requestId: input.options.requestId,
+            sessionId: input.options.sessionId,
+            steps: [
+              {
+                id: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
+                kind: 'plan',
+                name: 'planner.plan',
+                startedAt: '2026-01-11T00:00:00.000Z',
+              },
+            ],
+          },
+        }),
     });
 
     const tools = new ToolRegistry();
@@ -278,9 +283,13 @@ describe('Agent tool execution', () => {
     expect(r1.toolResults[0].result).toBe(7);
     expect(r2.toolResults[0].result).toBe(7);
 
-    const toolSteps2 = r2.trace.steps.filter((s) => s.kind === 'tool');
+    const toolSteps2 = r2.trace.steps.filter(s => s.kind === 'tool');
     expect(toolSteps2.length).toBe(1);
-    expect((toolSteps2[0].input as any).reused).toBe(true);
+    const input = toolSteps2[0].input;
+    const reused =
+      input && typeof input === 'object' && 'reused' in input
+        ? (input as { reused?: unknown }).reused
+        : undefined;
+    expect(reused).toBe(true);
   });
 });
-

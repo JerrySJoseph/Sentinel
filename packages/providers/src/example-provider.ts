@@ -27,9 +27,11 @@ export class ExampleProvider implements ToggleableProvider {
     return Boolean(this.opts.enabled);
   }
 
-  async plan(input: PlanInput): Promise<PlanOutput> {
+  plan(input: PlanInput): Promise<PlanOutput> {
     // Defensive: ensure we don't accidentally use this in tests.
-    if (process.env.NODE_ENV === 'test') throw new ProviderDisabledInTestError(this.name);
+    if (process.env.NODE_ENV === 'test') {
+      return Promise.reject(new ProviderDisabledInTestError(this.name));
+    }
 
     const startedAt = new Date().toISOString();
     const endedAt = startedAt;
@@ -57,7 +59,6 @@ export class ExampleProvider implements ToggleableProvider {
     };
 
     // Strict runtime validation is mandatory.
-    return PlanOutputSchema.parse(output);
+    return Promise.resolve(PlanOutputSchema.parse(output));
   }
 }
-

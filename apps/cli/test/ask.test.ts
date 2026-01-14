@@ -61,9 +61,7 @@ describe('Ask Command', () => {
       message: 'hi',
     });
 
-    expect(consoleLogSpy).toHaveBeenCalledWith(
-      'sessionId: 3fa85f64-5717-4562-b3fc-2c963f66afa7'
-    );
+    expect(consoleLogSpy).toHaveBeenCalledWith('sessionId: 3fa85f64-5717-4562-b3fc-2c963f66afa7');
     expect(consoleLogSpy).toHaveBeenCalledWith('hello back');
     expect(processExitSpy).toHaveBeenCalledWith(0);
   });
@@ -92,4 +90,3 @@ describe('Ask Command', () => {
     expect(processExitSpy).toHaveBeenCalledWith(1);
   });
 });
-

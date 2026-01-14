@@ -204,4 +204,3 @@ describe('CalculatorTool', () => {
     expect(res.error?.code).toBe('INVALID_TOOL_ARGS');
   });
 });
-

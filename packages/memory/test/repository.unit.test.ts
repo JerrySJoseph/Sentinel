@@ -2,9 +2,10 @@ import { MemoryRepository } from '../src/repository';
 
 describe('MemoryRepository (unit)', () => {
   it('createSession delegates to prisma.session.create', async () => {
+    const sessionCreate = jest.fn().mockResolvedValue({ id: 's1' });
     const prisma = {
       session: {
-        create: jest.fn().mockResolvedValue({ id: 's1' }),
+        create: sessionCreate,
       },
     } as unknown as never;
 
@@ -12,7 +13,6 @@ describe('MemoryRepository (unit)', () => {
     const out = await repo.createSession();
 
     expect(out).toEqual({ id: 's1' });
-    expect((prisma as any).session.create).toHaveBeenCalledWith({ data: {} });
+    expect(sessionCreate).toHaveBeenCalledWith({ data: {} });
   });
 });
-

@@ -1,8 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import type { Server } from 'http';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { createPrismaClient, MemoryRepository } from '@sentinel/memory';
+import { ChatResponseSchema } from '@sentinel/contracts';
 
 const TEST_DB_URL =
   process.env.DATABASE_URL ??
@@ -42,12 +44,14 @@ describe('Chat persistence (e2e)', () => {
   it('continues a session across process restart and persists tool runs', async () => {
     // Turn 1 (process 1)
     const app1 = await createApp();
-    const res1 = await request(app1.getHttpServer())
+    const server1 = app1.getHttpServer() as unknown as Server;
+    const res1 = await request(server1)
       .post('/v1/chat')
       .send({ sessionId: SESSION_ID, message: 'hello-1' })
       .expect(200);
     expect(res1.headers['x-request-id']).toEqual(expect.any(String));
-    expect(res1.body.requestId).toBe(res1.headers['x-request-id']);
+    const body1 = ChatResponseSchema.parse(res1.body);
+    expect(body1.requestId).toBe(res1.headers['x-request-id']);
     await app1.close();
 
     const messagesAfter1 = await repo.listMessages(SESSION_ID);
@@ -58,19 +62,20 @@ describe('Chat persistence (e2e)', () => {
 
     // Turn 2 (process 2)
     const app2 = await createApp();
-    const res2 = await request(app2.getHttpServer())
+    const server2 = app2.getHttpServer() as unknown as Server;
+    const res2 = await request(server2)
       .post('/v1/chat')
       .send({ sessionId: SESSION_ID, message: 'hello-2' })
       .expect(200);
     expect(res2.headers['x-request-id']).toEqual(expect.any(String));
-    expect(res2.body.requestId).toBe(res2.headers['x-request-id']);
+    const body2 = ChatResponseSchema.parse(res2.body);
+    expect(body2.requestId).toBe(res2.headers['x-request-id']);
     await app2.close();
 
     const messagesAfter2 = await repo.listMessages(SESSION_ID);
     const toolRunsAfter2 = await repo.listToolRuns(SESSION_ID);
     expect(messagesAfter2).toHaveLength(4);
     expect(toolRunsAfter2).toHaveLength(2);
-    expect(toolRunsAfter2.every((tr) => tr.name === 'calculator')).toBe(true);
+    expect(toolRunsAfter2.every(tr => tr.name === 'calculator')).toBe(true);
   });
 });
-

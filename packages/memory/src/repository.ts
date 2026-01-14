@@ -113,7 +113,9 @@ export class MemoryRepository {
     });
   }
 
-  async createToolRunIdempotent(input: CreateToolRunInput & { idempotencyKey: string }): Promise<ToolRun> {
+  async createToolRunIdempotent(
+    input: CreateToolRunInput & { idempotencyKey: string }
+  ): Promise<ToolRun> {
     try {
       return await this.createToolRun(input);
     } catch (err) {
@@ -137,4 +139,3 @@ export class MemoryRepository {
     });
   }
 }
-

@@ -62,7 +62,7 @@ export class AnthropicProvider implements ToggleableProvider {
     if (!res.ok) throw new ProviderRegistryError(`Anthropic API error: ${res.status}`);
 
     const json = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
-    const text = json.content?.find((c) => c.type === 'text')?.text;
+    const text = json.content?.find(c => c.type === 'text')?.text;
     if (!text) throw new ProviderRegistryError('Anthropic response missing text content');
 
     let parsed: unknown;
@@ -75,4 +75,3 @@ export class AnthropicProvider implements ToggleableProvider {
     return PlanOutputSchema.parse(parsed);
   }
 }
-

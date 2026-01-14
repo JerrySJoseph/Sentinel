@@ -34,7 +34,10 @@ describe('Provider adapters (env-gated)', () => {
     const p = new OpenAIProvider({ apiKey: 'test' });
     expect(p.isEnabled()).toBe(false);
     await expect(
-      p.plan({ request: { message: 'hi' }, options: { requestId: '3fa85f64-5717-4562-b3fc-2c963f66afa6' } })
+      p.plan({
+        request: { message: 'hi' },
+        options: { requestId: '3fa85f64-5717-4562-b3fc-2c963f66afa6' },
+      })
     ).rejects.toThrow(ProviderDisabledInTestError);
   });
 
@@ -46,4 +49,3 @@ describe('Provider adapters (env-gated)', () => {
     expect(() => registry.register(new OpenAIProvider({ apiKey: 'test' }))).toThrow();
   });
 });
-

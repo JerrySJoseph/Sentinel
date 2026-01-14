@@ -7,10 +7,7 @@ import { UndiciHttpClient } from './http-client';
 
 const program = new Command();
 
-program
-    .name('sentinel')
-    .description('CLI client for the Sentinel agent system')
-    .version('0.1.0');
+program.name('sentinel').description('CLI client for the Sentinel agent system').version('0.1.0');
 
 const httpClient = new UndiciHttpClient();
 program.addCommand(createHealthCommand(httpClient));

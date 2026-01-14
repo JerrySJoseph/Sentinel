@@ -1,10 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import type { Server } from 'http';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { ErrorResponseSchema } from '@sentinel/contracts';
 
 describe('Error model normalization (e2e)', () => {
   let app: INestApplication;
+  let server: Server;
 
   beforeAll(async () => {
     process.env.DATABASE_URL =
@@ -17,6 +20,7 @@ describe('Error model normalization (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    server = app.getHttpServer() as unknown as Server;
   });
 
   afterAll(async () => {
@@ -24,29 +28,22 @@ describe('Error model normalization (e2e)', () => {
   });
 
   it('normalizes provider errors', async () => {
-    const res = await request(app.getHttpServer()).get('/__test__/errors/provider').expect(502);
+    const res = await request(server).get('/__test__/errors/provider').expect(502);
     expect(res.headers['x-request-id']).toEqual(expect.any(String));
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        statusCode: 502,
-        code: 'PROVIDER_ERROR',
-        message: expect.any(String),
-        requestId: res.headers['x-request-id'],
-      })
-    );
+    const body = ErrorResponseSchema.parse(res.body);
+    expect(body.statusCode).toBe(502);
+    expect(body.code).toBe('PROVIDER_ERROR');
+    expect(typeof body.message).toBe('string');
+    expect(body.requestId).toBe(res.headers['x-request-id']);
   });
 
   it('normalizes tool errors', async () => {
-    const res = await request(app.getHttpServer()).get('/__test__/errors/tool').expect(500);
+    const res = await request(server).get('/__test__/errors/tool').expect(500);
     expect(res.headers['x-request-id']).toEqual(expect.any(String));
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        statusCode: 500,
-        code: 'TOOL_NOT_FOUND',
-        message: expect.any(String),
-        requestId: res.headers['x-request-id'],
-      })
-    );
+    const body = ErrorResponseSchema.parse(res.body);
+    expect(body.statusCode).toBe(500);
+    expect(body.code).toBe('TOOL_NOT_FOUND');
+    expect(typeof body.message).toBe('string');
+    expect(body.requestId).toBe(res.headers['x-request-id']);
   });
 });
-

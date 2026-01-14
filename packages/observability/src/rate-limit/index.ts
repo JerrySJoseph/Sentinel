@@ -4,4 +4,3 @@ export { RateLimiter } from './rate-limiter';
 export { InMemoryRateLimitStore } from './in-memory-store';
 export type { CreateRedisRateLimitStoreOptions, RateLimitLogger } from './redis-store';
 export { RedisRateLimitStore, createRedisRateLimitStore } from './redis-store';
-

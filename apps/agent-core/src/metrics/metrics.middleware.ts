@@ -14,8 +14,10 @@ export class MetricsMiddleware implements NestMiddleware {
       const durationSeconds = Number(endNs - startNs) / 1e9;
 
       // Keep route label bounded: use matched route template when available.
-      const routePath = (req as any)?.route?.path as string | undefined;
-      const baseUrl = typeof (req as any)?.baseUrl === 'string' ? (req as any).baseUrl : '';
+      const routeInfo = (req as unknown as { route?: { path?: unknown } }).route;
+      const routePath =
+        routeInfo && typeof routeInfo.path === 'string' ? routeInfo.path : undefined;
+      const baseUrl = typeof req.baseUrl === 'string' ? req.baseUrl : '';
       const route = routePath ? `${baseUrl}${routePath}` : 'unknown';
 
       this.metrics.observeHttp({
@@ -29,4 +31,3 @@ export class MetricsMiddleware implements NestMiddleware {
     next();
   }
 }
-

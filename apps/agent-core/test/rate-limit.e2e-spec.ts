@@ -1,10 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import type { Server } from 'http';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { ErrorResponseSchema } from '@sentinel/contracts';
 
 describe('Rate limiting (e2e)', () => {
   let app: INestApplication;
+  let server: Server;
 
   beforeAll(async () => {
     process.env.DATABASE_URL =
@@ -23,6 +26,7 @@ describe('Rate limiting (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    server = app.getHttpServer() as unknown as Server;
   });
 
   afterAll(async () => {
@@ -32,35 +36,22 @@ describe('Rate limiting (e2e)', () => {
   it('returns 429 with structured body on limit exceeded', async () => {
     const ip = '203.0.113.10';
 
-    await request(app.getHttpServer())
-      .get('/health')
-      .set('x-forwarded-for', ip)
-      .expect(200);
+    await request(server).get('/health').set('x-forwarded-for', ip).expect(200);
 
-    await request(app.getHttpServer())
-      .get('/health')
-      .set('x-forwarded-for', ip)
-      .expect(200);
+    await request(server).get('/health').set('x-forwarded-for', ip).expect(200);
 
-    const res = await request(app.getHttpServer())
-      .get('/health')
-      .set('x-forwarded-for', ip)
-      .expect(429);
+    const res = await request(server).get('/health').set('x-forwarded-for', ip).expect(429);
 
     expect(res.headers['x-request-id']).toEqual(expect.any(String));
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        statusCode: 429,
-        code: 'RATE_LIMITED',
-        message: expect.any(String),
-        requestId: res.headers['x-request-id'],
-      })
-    );
+    const body = ErrorResponseSchema.parse(res.body);
+    expect(body.statusCode).toBe(429);
+    expect(body.code).toBe('RATE_LIMITED');
+    expect(typeof body.message).toBe('string');
+    expect(body.requestId).toBe(res.headers['x-request-id']);
 
-    if (res.body.retryAfterMs !== undefined) {
-      expect(res.body.retryAfterMs).toEqual(expect.any(Number));
-      expect(res.body.retryAfterMs).toBeGreaterThanOrEqual(0);
+    if (body.retryAfterMs !== undefined) {
+      expect(typeof body.retryAfterMs).toBe('number');
+      expect(body.retryAfterMs).toBeGreaterThanOrEqual(0);
     }
   });
 });
-

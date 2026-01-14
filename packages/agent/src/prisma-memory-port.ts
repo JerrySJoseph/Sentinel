@@ -1,4 +1,4 @@
-import { ChatMessage, JsonValue, ToolCall, ToolResult } from '@sentinel/contracts';
+import { ChatMessage, JsonValue, toolErrorSchema, ToolCall, ToolResult } from '@sentinel/contracts';
 import { MemoryPort } from './memory';
 import { MemoryRepository, MessageRole, Prisma } from '@sentinel/memory';
 
@@ -16,7 +16,7 @@ export class PrismaMemoryPort implements MemoryPort {
 
   async loadHistory(sessionId: string): Promise<ChatMessage[]> {
     const messages = await this.repo.listMessages(sessionId);
-    return messages.map((m) => ({
+    return messages.map(m => ({
       id: m.id,
       role: m.role,
       content: m.content,
@@ -49,8 +49,19 @@ export class PrismaMemoryPort implements MemoryPort {
       toolCallId: run.toolCallId,
       name: run.name,
       ok: run.ok,
-      result: run.result === null || run.result === undefined ? undefined : (run.result as unknown as JsonValue),
-      error: run.error === null || run.error === undefined ? undefined : (run.error as unknown as any),
+      result:
+        run.result === null || run.result === undefined
+          ? undefined
+          : (run.result as unknown as JsonValue),
+      error:
+        run.error === null || run.error === undefined
+          ? undefined
+          : (() => {
+              const parsed = toolErrorSchema.safeParse(run.error);
+              return parsed.success
+                ? parsed.data
+                : { message: 'Invalid persisted tool error', code: 'TOOL_EXECUTION_ERROR' };
+            })(),
       startedAt: run.startedAt?.toISOString(),
       endedAt: run.endedAt?.toISOString(),
       durationMs: run.durationMs ?? undefined,
@@ -64,7 +75,7 @@ export class PrismaMemoryPort implements MemoryPort {
     toolCalls: ToolCall[],
     toolResults: ToolResult[]
   ): Promise<void> {
-    const byId = new Map(toolCalls.map((tc) => [tc.id, tc]));
+    const byId = new Map(toolCalls.map(tc => [tc.id, tc]));
     for (const tr of toolResults) {
       const tc = byId.get(tr.toolCallId);
       if (!tc) continue;
@@ -87,4 +98,3 @@ export class PrismaMemoryPort implements MemoryPort {
     }
   }
 }
-

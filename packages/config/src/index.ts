@@ -25,6 +25,10 @@ export const agentCoreEnvSchema = z.object({
     .optional(),
   PORT: z.preprocess(emptyStringToUndefined, z.coerce.number().int().positive().optional()),
   DATABASE_URL: z.string().min(1),
+  TRUST_PROXY: z.preprocess(
+    emptyStringToUndefined,
+    z.preprocess(stringToBoolean, z.boolean().optional())
+  ),
   CORS_ORIGINS: z.preprocess(emptyStringToUndefined, z.string().min(1).optional()),
   REDIS_URL: z.preprocess(emptyStringToUndefined, z.string().min(1).optional()),
   RATE_LIMIT_ENABLED: z.preprocess(
@@ -63,6 +67,7 @@ export type AgentCoreConfig = {
   nodeEnv?: 'development' | 'test' | 'production';
   port?: number;
   databaseUrl: string;
+  trustProxy: boolean;
   corsOrigins?: string;
   redis: { enabled: boolean; url?: string };
   rateLimit: {
@@ -78,13 +83,11 @@ export type AgentCoreConfig = {
   };
 };
 
-export function loadAgentCoreConfig(
-  env: Record<string, unknown> = process.env
-): AgentCoreConfig {
+export function loadAgentCoreConfig(env: Record<string, unknown> = process.env): AgentCoreConfig {
   const parsed = agentCoreEnvSchema.safeParse(env);
   if (!parsed.success) {
     const issues = parsed.error.issues
-      .map((i) => `${i.path.join('.') || 'env'}: ${i.message}`)
+      .map(i => `${i.path.join('.') || 'env'}: ${i.message}`)
       .join(', ');
     throw new Error(`Invalid agent-core environment: ${issues}`);
   }
@@ -93,8 +96,11 @@ export function loadAgentCoreConfig(
     nodeEnv: parsed.data.NODE_ENV,
     port: parsed.data.PORT,
     databaseUrl: parsed.data.DATABASE_URL,
+    trustProxy: parsed.data.TRUST_PROXY ?? false,
     corsOrigins: parsed.data.CORS_ORIGINS,
-    redis: parsed.data.REDIS_URL ? { enabled: true, url: parsed.data.REDIS_URL } : { enabled: false },
+    redis: parsed.data.REDIS_URL
+      ? { enabled: true, url: parsed.data.REDIS_URL }
+      : { enabled: false },
     rateLimit: {
       enabled: parsed.data.RATE_LIMIT_ENABLED ?? true,
       perIp: {
@@ -111,4 +117,3 @@ export function loadAgentCoreConfig(
     },
   };
 }
-

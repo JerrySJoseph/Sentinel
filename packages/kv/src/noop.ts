@@ -3,18 +3,19 @@ import type { KvBackend, KvSetOptions } from './kv';
 export function createNoopKvBackend(): KvBackend {
   return {
     kind: 'noop',
-    async get(_key: string): Promise<string | null> {
-      return null;
+    get(_key: string): Promise<string | null> {
+      return Promise.resolve(null);
     },
-    async set(_key: string, _value: string, _options?: KvSetOptions): Promise<void> {
+    set(_key: string, _value: string, _options?: KvSetOptions): Promise<void> {
       // no-op
+      return Promise.resolve();
     },
-    async del(_key: string): Promise<number> {
-      return 0;
+    del(_key: string): Promise<number> {
+      return Promise.resolve(0);
     },
-    async close(): Promise<void> {
+    close(): Promise<void> {
       // no-op
+      return Promise.resolve();
     },
   };
 }
-

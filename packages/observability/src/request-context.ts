@@ -26,4 +26,3 @@ export function setRequestContext(patch: Partial<RequestContext>): void {
 export function getRequestId(): string | undefined {
   return als.getStore()?.requestId;
 }
-

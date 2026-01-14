@@ -15,7 +15,7 @@ describe('executeToolCall', () => {
       description: 'echo',
       risk: 'safe',
       argsSchema: z.object({ text: z.string() }).strict(),
-      execute: async (args) => ({ echoed: args.text }),
+      execute: args => Promise.resolve({ echoed: args.text }),
     };
     registry.register(tool);
 
@@ -42,7 +42,7 @@ describe('executeToolCall', () => {
       description: 'echo',
       risk: 'safe',
       argsSchema: z.object({ text: z.string().min(2) }).strict(),
-      execute: async () => 'ok',
+      execute: () => Promise.resolve('ok'),
     });
 
     const res = await executeToolCall({
@@ -65,7 +65,7 @@ describe('executeToolCall', () => {
       description: 'slow',
       risk: 'safe',
       argsSchema: z.object({}).strict(),
-      execute: async () => new Promise((resolve) => setTimeout(() => resolve('done'), 50)),
+      execute: () => new Promise(resolve => setTimeout(() => resolve('done'), 50)),
     });
 
     const res = await executeToolCall({
@@ -88,7 +88,7 @@ describe('executeToolCall', () => {
       description: 'big',
       risk: 'safe',
       argsSchema: z.object({}).strict(),
-      execute: async () => ({ data: 'x'.repeat(10_000) }),
+      execute: () => Promise.resolve({ data: 'x'.repeat(10_000) }),
     });
 
     const res = await executeToolCall({
@@ -113,7 +113,7 @@ describe('executeToolCall', () => {
       description: 'danger',
       risk: 'developer',
       argsSchema: z.object({}).strict(),
-      execute: async () => 'ok',
+      execute: () => Promise.resolve('ok'),
     });
 
     const res = await executeToolCall({
@@ -129,4 +129,3 @@ describe('executeToolCall', () => {
     expect(res.error?.code).toBe('POLICY_DENIED');
   });
 });
-
